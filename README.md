@@ -1,7 +1,7 @@
 # madman
 
 [![](https://jitpack.io/v/flipkart-incubator/madman-android.svg)](https://jitpack.io/#flipkart-incubator/madman-android)
- [![Build Status](https://travis-ci.org/flipkart-incubator/madman-android.svg?branch=master)](https://travis-ci.org/flipkart-incubator/madman-android)
+ [![Build Status](https://travis-ci.org/flipkart-incubator/madman-android.svg?branch=master)](https://travis-ci.org/flipkart-incubator/madman-android) [![codecov.io](https://codecov.io/github/flipkart-incubator/madman-android/branch/master/graph/badge.svg)](https://codecov.io/github/flipkart-incubator/madman-android)
 
 The Madman library (Media Ads Manager) enables you to advertise video contents with video ads. 
 
