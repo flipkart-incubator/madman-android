@@ -36,12 +36,13 @@ Initial numbers for playing pre-roll ads (Test env: API-29 emulator, wifi, simil
 
 The madman is approximately ~700 ms faster in loading the pre-roll ad as compared to IMA.
 
-See it for yourself: 
+#### Load time comparison: 
 
-![Comparsion](https://github.fkinternal.com/Flipkart/madman-android/blob/master/files/comparison.gif)
+![Comparsion](https://github.com/flipkart-incubator/madman-android/blob/master/files/comparison.gif)
 
 
 ## Get Madman
+
 Add it in your root build.gradle at the end of repositories :
 ```kotlin
 allprojects {
