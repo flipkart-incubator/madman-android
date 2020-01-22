@@ -13,7 +13,5 @@ android:
     - extra-google-m2repository
 script:
    - ./gradlew test
-r_packages:
-  - covr
 after_success:
-  - Rscript -e 'library(covr); codecov()'
+  - bash <(curl -s https://codecov.io/bash)
