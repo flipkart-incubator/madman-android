@@ -20,10 +20,6 @@ allprojects {
         google()
         jcenter()
         mavenLocal()
-        maven { url ARTIFACTORY_REPO_URL + RELEASE_REPO_KEY }
-        maven { url ARTIFACTORY_REPO_URL + RELEASES_REPO_KEY }
-        maven { url ARTIFACTORY_REPO_URL + SNAPSHOT_REPO_KEY }
-        maven { url ARTIFACTORY_REPO_URL + SNAPSHOTS_REPO_KEY }
         maven { url "https://jitpack.io" }
     }
 }
