@@ -12,6 +12,7 @@ android:
     - extra-android-m2repository
     - extra-google-m2repository
 script:
-   - ./gradlew test
+   - ./gradlew build jacocoTestReport
+   - ./gradlew connectedCheck
 after_success:
   - bash <(curl -s https://codecov.io/bash)
