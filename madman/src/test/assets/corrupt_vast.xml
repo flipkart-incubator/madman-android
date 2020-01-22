@@ -1,0 +1,37 @@
+<VAST-1 version="3.0">
+    <Ad id="1" sequence="1">
+        <InLine>
+            <AdSystem>Flipkart DSP</AdSystem>
+            <AdTitle>Flipkart Video Ad</AdTitle>
+            <Error>...</Error>
+            <Impression id="imp1">...</Impression>
+            <Creatives>
+                <Creative id="1" sequence="1">
+                    <Linear>
+                        <MediaFiles>
+                            <MediaFile delivery="streaming" height="720" id="mediaId1"
+                                maintainAspectRatio="true" scalable="true"
+                                type="application/x-mpegURL" width="1280">
+                                <![CDATA[http://trinity-fk.akamaized.net/fk3penc/encj6zfn8eJVxb7OZJwpRn7iCeD5XuvqRZl4XTY3v2ZA7aXujf9l2jjf%2Fo1Hq8qCcAZ/master.m3u8]]></MediaFile>
+                        </MediaFiles>
+                        <VideoClicks>
+                            <ClickThrough id="fkClickThroughId">
+                                <![CDATA[https://www.flipkart.com/mobile-accessories/power-banks/~cs-nvhikqiq2g/pr?sid=tyy%2C4mr%2Cfu6]]></ClickThrough>
+                            <ClickTracking id="click1">
+                                <![CDATA[https://tracking.m3.flipkart.net/videoAdClick?pl=yyWoeO5vef9dw-aps0ZLJBS_KlR-bGPRAksRMeqzGv3HMVL4QVKHdu5RdQ1K1vkGz26CEn1qjGqFXVIlheoJF8efwuwdl2fxN1rz2vINvpp_ePfILaIQWEEzJ14-SNwUV8LQwq_HjUteelm6c1QMuMO7dNZvWcONcmff4vQ6TLVeUOu0MVkW1J-En7BaGV3l&vt=[CONTENTPLAYHEAD]]]></ClickTracking>
+                        </VideoClicks>
+                        <TrackingEvents>
+                            <Tracking event="start">
+                                <![CDATA[https://tracking.m3.flipkart.net/videoAdView?pl=yyWoeO5vef9dw-aps0ZLJBS_KlR-bGPRAksRMeqzGv3HMVL4QVKHdu5RdQ1K1vkGz26CEn1qjGqFXVIlheoJF8efwuwdl2fxN1rz2vINvpp_ePfILaIQWEEzJ14-SNwUV8LQwq_HjUteelm6c1QMuMO7dNZvWcONcmff4vQ6TLVPveOcQ8en-yJJTKucJ11g50UxyD70oH7w7W1ZMqMVtsk5fWJzyPk6Gp7cMaRnATNuZ_RgGcmMtLdc3nYsnstDuxmplPkEVZhe-cuaY2DfJTFnMdcO7spgBTJGZ637UvqFyEmXT9sn-EZYsDAZXtENjTZJGtB457QCnHcEw4C3gWCuBN0Lwe_I0_fTc59SbBOsq5X8-8DT4pu5IrNkLg5TKOBtyyLi_vf24x9qLCh9orX4c6IPKWPrl6URuGJhkjVY4j4oxM2vpRzHx95l4gd9lZvTNvn3AabDFz-YEYjSdGXIQdkBwR4TZfsWnKQ0R4zh3_obUnATWV3u5Rktmt-OHc1lw6icesFiT16k6hXJ5ZrEGg5rRQ0UkHagXtd-dv1PMJr06YtZCWVU5mMvAF3iXKVnpz_THqOIMt9mKcA416s5VtmoQ9-9JR7GII8ar_8Du1phOTNctA54hSkgc-9ZNnVkiinJTw4y4SW9tbzuxnQPrND0avssYgbitHgNR5o&vt=[CONTENTPLAYHEAD]]]></Tracking>
+                            <Tracking event="firstQuartile">
+                                <![CDATA[https://tracking.m3.flipkart.net/videoAdView?pl=yyWoeO5vef9dw-aps0ZLJBS_KlR-bGPRAksRMeqzGv3HMVL4QVKHdu5RdQ1K1vkGz26CEn1qjGqFXVIlheoJF8efwuwdl2fxN1rz2vINvpp_ePfILaIQWEEzJ14-SNwUV8LQwq_HjUteelm6c1QMuMO7dNZvWcONcmff4vQ6TLVPveOcQ8en-yJJTKucJ11g50UxyD70oH7w7W1ZMqMVtsk5fWJzyPk6Gp7cMaRnATNuZ_RgGcmMtLdc3nYsnstDuxmplPkEVZhe-cuaY2DfJTFnMdcO7spgBTJGZ637UvqFyEmXT9sn-EZYsDAZXtENjTZJGtB457QCnHcEw4C3gWCuBN0Lwe_I0_fTc59SbBOsq5X8-8DT4pu5IrNkLg5TKOBtyyLi_vf24x9qLCh9orX4c6IPKWPrl6URuGJhkjVY4j4oxM2vpRzHx95l4gd9lZvTNvn3AabDFz-YEYjSdGXIQdkBwR4TZfsWnKQ0R4zh3_obUnATWV3u5Rktmt-OHc1lw6icesFiT16k6hXJ5ZrEGg5rRQ0UkHagXtd-dv1PMJr06YtZCWVU5mMvAF3iXKVnpz_THqOIMt9mKcA416s5VtmoQ9-9JR7GII8ar_8Du1phOTNctA54hSkgc-9ZNnVkiinJTw4y4SW9tbzuxnK25ce4VF_jOgPGyGVweFE&vt=[CONTENTPLAYHEAD]]]></Tracking>
+                            <Tracking event="midpoint">
+                                <![CDATA[https://tracking.m3.flipkart.net/videoAdView?pl=yyWoeO5vef9dw-aps0ZLJBS_KlR-bGPRAksRMeqzGv3HMVL4QVKHdu5RdQ1K1vkGz26CEn1qjGqFXVIlheoJF8efwuwdl2fxN1rz2vINvpp_ePfILaIQWEEzJ14-SNwUV8LQwq_HjUteelm6c1QMuMO7dNZvWcONcmff4vQ6TLVPveOcQ8en-yJJTKucJ11g50UxyD70oH7w7W1ZMqMVtsk5fWJzyPk6Gp7cMaRnATNuZ_RgGcmMtLdc3nYsnstDuxmplPkEVZhe-cuaY2DfJTFnMdcO7spgBTJGZ637UvqFyEmXT9sn-EZYsDAZXtENjTZJGtB457QCnHcEw4C3gWCuBN0Lwe_I0_fTc59SbBOsq5X8-8DT4pu5IrNkLg5TKOBtyyLi_vf24x9qLCh9orX4c6IPKWPrl6URuGJhkjVY4j4oxM2vpRzHx95l4gd9lZvTNvn3AabDFz-YEYjSdGXIQdkBwR4TZfsWnKQ0R4zh3_obUnATWV3u5Rktmt-OHc1lw6icesFiT16k6hXJ5ZrEGg5rRQ0UkHagXtd-dv1PMJr06YtZCWVU5mMvAF3iXKVnpz_THqOIMt9mKcA416s5VtmoQ9-9JR7GII8ar_8Du1phOTNctA54hSkgc-9ZNnVkiinJTw4y4SW9tbzuxiQe56d1_BRtTFkv9Hs80II&vt=[CONTENTPLAYHEAD]]]></Tracking>
+                        </TrackingEvents>
+                        <Duration>00:00:30.320</Duration>
+                    </Linear>
+                </Creative>
+            </Creatives>
+        </InLine>
+    </Ad>
+</VAST-1>

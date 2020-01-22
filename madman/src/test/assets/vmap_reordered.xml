@@ -1,0 +1,58 @@
+<vmap:VMAP xmlns:vmap="//www.iab.net/vmap-1.0" version="1.0">
+    <vmap:AdBreak breakId="midrolls2" breakType="linear" timeOffset="00:00:15.125">
+        <vmap:TrackingEvents>
+            <vmap:Tracking event="breakStart">
+                <![CDATA[//test.videostrip.com/vmap/breakstart3.xml]]></vmap:Tracking>
+            <vmap:Tracking event="breakEnd">
+                <![CDATA[//test.videostrip.com/vmap/breakend3.xml]]></vmap:Tracking>
+            <vmap:Tracking event="error">
+                <![CDATA[//test.videostrip.com/vmap/breakerror3.xml]]></vmap:Tracking>
+        </vmap:TrackingEvents>
+        <vmap:AdSource allowMultipleAds="true" followRedirects="true" id="2">
+            <vmap:AdTagURI templateType="vast3">
+                <![CDATA[//playertest.longtailvideo.com/adtags/vast3_pod.xml]]></vmap:AdTagURI>
+        </vmap:AdSource>
+    </vmap:AdBreak>
+    <vmap:AdBreak breakId="midrolls2" breakType="nonlinear" timeOffset="70%">
+        <vmap:TrackingEvents>
+            <vmap:Tracking event="breakStart">
+                <![CDATA[//test.videostrip.com/vmap/breakstart4.xml]]></vmap:Tracking>
+            <vmap:Tracking event="breakEnd">
+                <![CDATA[//test.videostrip.com/vmap/breakend4.xml]]></vmap:Tracking>
+            <vmap:Tracking event="error">
+                <![CDATA[//test.videostrip.com/vmap/breakerror4.xml]]></vmap:Tracking>
+        </vmap:TrackingEvents>
+        <vmap:AdSource allowMultipleAds="true" followRedirects="true" id="2">
+            <vmap:AdTagURI templateType="vast2">
+                <![CDATA[//playertest.longtailvideo.com/adtags/vast_inline_nonlinear.xml]]></vmap:AdTagURI>
+        </vmap:AdSource>
+    </vmap:AdBreak>
+    <vmap:AdBreak breakId="midrolls2" breakType="linear" timeOffset="#1">
+        <vmap:TrackingEvents>
+            <vmap:Tracking event="breakStart">
+                <![CDATA[//test.videostrip.com/vmap/breakstart5.xml]]></vmap:Tracking>
+            <vmap:Tracking event="breakEnd">
+                <![CDATA[//test.videostrip.com/vmap/breakend5.xml]]></vmap:Tracking>
+            <vmap:Tracking event="error">
+                <![CDATA[//test.videostrip.com/vmap/breakerror5.xml]]></vmap:Tracking>
+        </vmap:TrackingEvents>
+        <vmap:AdSource allowMultipleAds="true" followRedirects="true" id="2">
+            <vmap:AdTagURI templateType="vast2">
+                <![CDATA[//playertest.longtailvideo.com/adtags/midroll.xml]]></vmap:AdTagURI>
+        </vmap:AdSource>
+    </vmap:AdBreak>
+    <vmap:AdBreak breakId="post" breakType="linear" timeOffset="end">
+        <vmap:TrackingEvents>
+            <vmap:Tracking event="breakStart">
+                <![CDATA[//test.videostrip.com/vmap/breakstart6.xml]]></vmap:Tracking>
+            <vmap:Tracking event="breakEnd">
+                <![CDATA[//test.videostrip.com/vmap/breakend6.xml]]></vmap:Tracking>
+            <vmap:Tracking event="error">
+                <![CDATA[//test.videostrip.com/vmap/breakerror6.xml]]></vmap:Tracking>
+        </vmap:TrackingEvents>
+        <vmap:AdSource allowMultipleAds="true" followRedirects="true" id="3">
+            <vmap:AdTagURI templateType="vast2">
+                <![CDATA[//playertest.longtailvideo.com/adtags/postroll.xml]]></vmap:AdTagURI>
+        </vmap:AdSource>
+    </vmap:AdBreak>
+</vmap:VMAP>

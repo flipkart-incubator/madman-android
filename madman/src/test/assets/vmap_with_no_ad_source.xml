@@ -1,0 +1,12 @@
+<vmap:VMAP xmlns:vmap="//www.iab.net/vmap-1.0" version="1.0">
+    <vmap:AdBreak breakId="post" breakType="linear" timeOffset="end">
+        <vmap:TrackingEvents>
+            <vmap:Tracking event="breakStart">
+                <![CDATA[//test.videostrip.com/vmap/breakstart6.xml]]></vmap:Tracking>
+            <vmap:Tracking event="breakEnd">
+                <![CDATA[//test.videostrip.com/vmap/breakend6.xml]]></vmap:Tracking>
+            <vmap:Tracking event="error">
+                <![CDATA[//test.videostrip.com/vmap/breakerror6.xml]]></vmap:Tracking>
+        </vmap:TrackingEvents>
+    </vmap:AdBreak>
+</vmap:VMAP>
