@@ -21,7 +21,6 @@ package com.flipkart.madman.okhttp.extension
 import android.os.CancellationSignal
 import com.flipkart.madman.network.NetworkListener
 import com.flipkart.madman.network.model.NetworkAdRequest
-import com.flipkart.madman.testutils.anyObject
 import okhttp3.*
 import org.junit.Before
 import org.junit.Test
@@ -150,7 +149,8 @@ class DefaultNetworkLayerTest {
             .onSuccess(ArgumentMatchers.eq(202), ArgumentMatchers.eq(null))
     }
 
-    inner class TestNetworkLayer : com.flipkart.madman.okhttp.extension.DefaultNetworkLayer(RuntimeEnvironment.application) {
+    inner class TestNetworkLayer :
+        com.flipkart.madman.okhttp.extension.DefaultNetworkLayer(RuntimeEnvironment.application) {
         override fun createOkHttpClient(): OkHttpClient {
             return mockOkHttpClient
         }
