@@ -1,5 +1,7 @@
 # madman
 
+[![Build Status](https://travis-ci.org/flipkart-incubator/madman-android.svg?branch=master)](https://travis-ci.org/flipkart-incubator/madman-android)
+
 The Madman library (Media Ads Manager) enables you to advertise video contents with video ads. 
 
 The library is designed to 
@@ -104,7 +106,7 @@ madman.requestAds(request, adRenderer)
 
 ## Getting Started
 
-For more information, read <b>[Wiki](https://github.fkinternal.com/Flipkart/madman-android/wiki)</b>
+For more information, read <b>[Wiki](https://github.com/flipkart-incubator/madman-android/wiki)</b>
 
 
 ## What's missing
