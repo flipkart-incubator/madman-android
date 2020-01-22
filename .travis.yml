@@ -13,3 +13,5 @@ android:
     - extra-google-m2repository
 script:
    - ./gradlew test
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
