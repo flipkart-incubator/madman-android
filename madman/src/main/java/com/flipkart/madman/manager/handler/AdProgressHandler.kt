@@ -4,6 +4,7 @@ import android.os.Handler
 import android.os.Message
 import com.flipkart.madman.provider.AdProgressProvider
 import com.flipkart.madman.provider.Progress
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Handler which calls the [AdProgressProvider] every x seconds
@@ -11,7 +12,7 @@ import com.flipkart.madman.provider.Progress
 class AdProgressHandler(private val provider: AdProgressProvider) {
 
     private var handler: Handler? = null
-    private var listeners: MutableList<AdProgressUpdateListener>? = null
+    private var listeners: CopyOnWriteArrayList<AdProgressUpdateListener>? = null
     private val callback = AdProgressCallback()
     private var delay: Long = 0
 
@@ -21,7 +22,7 @@ class AdProgressHandler(private val provider: AdProgressProvider) {
 
     fun setListener(listener: AdProgressUpdateListener) {
         if (listeners == null) {
-            listeners = ArrayList()
+            listeners = CopyOnWriteArrayList()
         }
         listeners?.add(listener)
     }
@@ -32,6 +33,7 @@ class AdProgressHandler(private val provider: AdProgressProvider) {
 
     fun removeListeners() {
         listeners?.clear()
+        listeners = null
     }
 
     fun sendMessage() {
