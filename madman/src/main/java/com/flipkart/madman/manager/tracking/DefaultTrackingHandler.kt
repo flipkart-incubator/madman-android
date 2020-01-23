@@ -35,7 +35,6 @@ class DefaultTrackingHandler(private val networkLayer: NetworkLayer) : TrackingH
 
     override fun trackEvent(event: Tracking.TrackingEvent, urlList: List<String>?) {
         urlList?.forEach {
-            LogUtil.log("Sending tracking for ${event.name} with url : $it")
             trackEvent(it)
         }
     }

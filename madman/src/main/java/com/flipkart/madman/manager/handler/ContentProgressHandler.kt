@@ -4,6 +4,7 @@ import android.os.Handler
 import android.os.Message
 import com.flipkart.madman.provider.ContentProgressProvider
 import com.flipkart.madman.provider.Progress
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Handler which calls the [ContentProgressProvider] every x seconds
@@ -11,7 +12,7 @@ import com.flipkart.madman.provider.Progress
 class ContentProgressHandler(private val provider: ContentProgressProvider) {
 
     private var handler: Handler? = null
-    private var listeners: MutableList<ContentProgressUpdateListener>? = null
+    private var listeners: CopyOnWriteArrayList<ContentProgressUpdateListener>? = null
 
     init {
         val callback = ContentProgressCallback()
@@ -20,7 +21,7 @@ class ContentProgressHandler(private val provider: ContentProgressProvider) {
 
     fun setListener(listener: ContentProgressUpdateListener) {
         if (listeners == null) {
-            listeners = ArrayList()
+            listeners = CopyOnWriteArrayList()
         }
         listeners?.add(listener)
     }
@@ -31,6 +32,7 @@ class ContentProgressHandler(private val provider: ContentProgressProvider) {
 
     fun removeListeners() {
         listeners?.clear()
+        listeners = null
     }
 
     fun sendMessage() {
