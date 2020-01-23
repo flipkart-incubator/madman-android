@@ -9,7 +9,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 /**
  * Handler which calls the [ContentProgressProvider] every x seconds
  */
-class ContentProgressHandler(private val provider: ContentProgressProvider) {
+class ContentProgressHandler(private val provider: ContentProgressProvider?) {
 
     private var handler: Handler? = null
     private var listeners: CopyOnWriteArrayList<ContentProgressUpdateListener>? = null
@@ -51,9 +51,11 @@ class ContentProgressHandler(private val provider: ContentProgressProvider) {
         override fun handleMessage(msg: Message): Boolean {
             when (msg.what) {
                 0 -> {
-                    val progress = provider.getContentProgress()
-                    listeners?.forEach {
-                        it.onContentProgressUpdate(progress)
+                    val contentProgress = provider?.getContentProgress()
+                    contentProgress?.let {
+                        listeners?.forEach {
+                            it.onContentProgressUpdate(contentProgress)
+                        }
                     }
                 }
             }

@@ -39,7 +39,7 @@ abstract class BaseAdManager(
 ) : AdManager, AdPlayerCallback(),
     ContentProgressHandler.ContentProgressUpdateListener,
     AdProgressHandler.AdProgressUpdateListener {
-    private lateinit var contentProgressProvider: ContentProgressProvider
+    private var contentProgressProvider: ContentProgressProvider? = null
 
     /** ad player interface **/
     private val player: AdPlayer by lazy {

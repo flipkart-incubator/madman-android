@@ -116,7 +116,9 @@ object XmlParserHelper {
      */
     @Throws(XmlPullParserException::class, IOException::class)
     fun skip(parser: XmlPullParser) {
-        check(parser.eventType == XmlPullParser.START_TAG)
+        if (parser.eventType != XmlPullParser.START_TAG) {
+            throw IOException("${parser.eventType} not of type start tag")
+        }
         var depth = 1
         while (depth != 0) {
             when (parser.next()) {
