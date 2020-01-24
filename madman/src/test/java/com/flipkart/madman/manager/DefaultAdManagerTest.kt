@@ -37,6 +37,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.*
+import org.mockito.Mockito.*
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowLooper
@@ -81,18 +82,20 @@ class DefaultAdManagerTest {
      * Test to verify the behaviour of the ad manager with a pre roll ad break
      */
     @Test
-    fun testBehaviourWithPreRollAd() {
+    fun testIfCorrectEventsAreTriggeredDuringAdPlayback() {
         val vmap = VMAPUtil.createVMAP()
 
         /** return undefined progress in start **/
-        Mockito.`when`(mockContentProgressProvider.getContentProgress())
-            .thenReturn(Progress(0, 0))
+        `when`(mockContentProgressProvider.getContentProgress()).thenReturn(Progress.UNDEFINED)
+
+        /** return undefined progress in start **/
+        `when`(mockAdPlayer.getAdProgress()).thenReturn(Progress.UNDEFINED)
 
         /** return default rendering settings **/
-        Mockito.`when`(mockAdRenderer.getRenderingSettings()).thenReturn(DefaultRenderingSettings())
+        `when`(mockAdRenderer.getRenderingSettings()).thenReturn(DefaultRenderingSettings())
 
         /** return default rendering settings **/
-        Mockito.`when`(mockAdRenderer.getAdPlayer()).thenReturn(mockAdPlayer)
+        `when`(mockAdRenderer.getAdPlayer()).thenReturn(mockAdPlayer)
 
         val adManager = DefaultAdManager(
             vmap,
@@ -107,21 +110,60 @@ class DefaultAdManagerTest {
         adManager.init(mockContentProgressProvider)
 
         /** ad event listener is called since we have a pre-roll to play **/
-        Mockito.verify(mockAdEventListener, Mockito.times(1)).onAdEvent(capture(adEventCaptor))
+        verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
 
         /** verify loaded event is fired first and player's load is called **/
         assert(adEventCaptor.value.getType() == AdEventType.LOADED)
-        Mockito.verify(mockAdPlayer, Mockito.times(1)).loadAd(anyObject())
+        verify(mockAdPlayer, times(1)).loadAd(anyObject())
 
         ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
 
         /** ad event listener is called since we have a pre-roll to play twice **/
-        Mockito.verify(mockAdEventListener, Mockito.times(2)).onAdEvent(capture(adEventCaptor))
+        verify(mockAdEventListener, times(2)).onAdEvent(capture(adEventCaptor))
 
         /** content pause event is fired and player's play is called **/
         assert(adEventCaptor.value.getType() == AdEventType.CONTENT_PAUSE_REQUESTED)
-        Mockito.verify(mockAdPlayer, Mockito.times(1)).playAd()
+        verify(mockAdPlayer, times(1)).playAd()
 
+        // mimic the playAd
+        `when`(mockAdPlayer.getAdProgress()).thenReturn(Progress(1, 10))
+        adManager.onPlay()
+
+        /** started event is fired **/
+        verify(mockAdEventListener, times(3)).onAdEvent(capture(adEventCaptor))
+        assert(adEventCaptor.value.getType() == AdEventType.STARTED)
+
+        `when`(mockAdPlayer.getAdProgress()).thenReturn(Progress(2, 10))
         ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+        /** progress event is fired **/
+        verify(mockAdEventListener, times(4)).onAdEvent(capture(adEventCaptor))
+        assert(adEventCaptor.value.getType() == AdEventType.PROGRESS)
+
+        `when`(mockAdPlayer.getAdProgress()).thenReturn(Progress(3, 10))
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+        /** first quartile event is fired **/
+        verify(mockAdEventListener, times(5)).onAdEvent(capture(adEventCaptor))
+        assert(adEventCaptor.value.getType() == AdEventType.FIRST_QUARTILE)
+
+        `when`(mockAdPlayer.getAdProgress()).thenReturn(Progress(6, 10))
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+        /** midpoint event is fired **/
+        verify(mockAdEventListener, times(6)).onAdEvent(capture(adEventCaptor))
+        assert(adEventCaptor.value.getType() == AdEventType.MIDPOINT)
+
+        `when`(mockAdPlayer.getAdProgress()).thenReturn(Progress(10, 10))
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+        /** third quartile event is fired **/
+        verify(mockAdEventListener, times(7)).onAdEvent(capture(adEventCaptor))
+        assert(adEventCaptor.value.getType() == AdEventType.THIRD_QUARTILE)
+
+        // mark the ad as completed
+        adManager.onEnded()
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+
+        /** completed event is fired **/
+        verify(mockAdPlayer, times(1)).stopAd()
+        verify(mockAdEventListener, times(9)).onAdEvent(capture(adEventCaptor))
+        assert(adEventCaptor.value.getType() == AdEventType.CONTENT_RESUME_REQUESTED)
     }
 }

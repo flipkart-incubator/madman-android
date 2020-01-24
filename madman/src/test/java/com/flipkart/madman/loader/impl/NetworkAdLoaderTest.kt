@@ -27,9 +27,12 @@ import com.flipkart.madman.parser.XmlParser
 import com.flipkart.madman.testutils.CurrentThreadExecutor
 import com.flipkart.madman.testutils.VMAPUtil
 import com.flipkart.madman.validator.DefaultXmlValidator
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mock
 import org.mockito.Mockito.*
+import org.mockito.MockitoAnnotations
 import org.mockito.stubbing.Answer
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -41,15 +44,23 @@ import org.robolectric.annotation.Config
 @Config(sdk = [21])
 class NetworkAdLoaderTest {
 
+    @Mock
+    private lateinit var mockNetworkLayer: NetworkLayer
+
+    private val handler = Handler()
+
+    private val executor = CurrentThreadExecutor()
+
+    @Before
+    fun setUp() {
+        MockitoAnnotations.initMocks(this)
+    }
+
     /**
      * Verify fetch is called once on the network layer
      */
     @Test
     fun testNetworkLayerFetchIsCalled() {
-        val handler = Handler()
-        val executor = CurrentThreadExecutor()
-        val mockNetworkLayer = mock(NetworkLayer::class.java)
-
         val loader = NetworkAdLoader(
             mockNetworkLayer,
             XmlParser.Builder().build(handler, executor),
@@ -75,10 +86,6 @@ class NetworkAdLoaderTest {
      */
     @Test
     fun testWhenNetworkLayerReturnFailure() {
-        val handler = Handler()
-        val executor = CurrentThreadExecutor()
-        val mockNetworkLayer = spy(NetworkLayer::class.java)
-
         val loader = NetworkAdLoader(
             mockNetworkLayer,
             XmlParser.Builder().build(handler, executor),
@@ -90,7 +97,11 @@ class NetworkAdLoaderTest {
             // mimic the network call failure case
             listener.onError(500, "Failed")
         }
-        doAnswer(answer).`when`(mockNetworkLayer).fetch(com.flipkart.madman.testutils.anyObject(), com.flipkart.madman.testutils.anyObject(), com.flipkart.madman.testutils.anyObject())
+        doAnswer(answer).`when`(mockNetworkLayer).fetch(
+            com.flipkart.madman.testutils.anyObject(),
+            com.flipkart.madman.testutils.anyObject(),
+            com.flipkart.madman.testutils.anyObject()
+        )
 
         val request = NetworkAdRequest().apply { url = "someurl" }
         loader.requestAds(request, {
@@ -107,10 +118,6 @@ class NetworkAdLoaderTest {
      */
     @Test
     fun testWhenNetworkLayerReturnSuccess() {
-        val handler = Handler()
-        val executor = CurrentThreadExecutor()
-        val mockNetworkLayer = spy(NetworkLayer::class.java)
-
         val loader = NetworkAdLoader(
             mockNetworkLayer,
             XmlParser.Builder().build(handler, executor),
@@ -122,7 +129,11 @@ class NetworkAdLoaderTest {
             // return success with empty response, should throw error
             listener.onSuccess(200, null)
         }
-        doAnswer(answer).`when`(mockNetworkLayer).fetch(com.flipkart.madman.testutils.anyObject(), com.flipkart.madman.testutils.anyObject(), com.flipkart.madman.testutils.anyObject())
+        doAnswer(answer).`when`(mockNetworkLayer).fetch(
+            com.flipkart.madman.testutils.anyObject(),
+            com.flipkart.madman.testutils.anyObject(),
+            com.flipkart.madman.testutils.anyObject()
+        )
 
         val request = NetworkAdRequest().apply { url = "someurl" }
         loader.requestAds(request, {

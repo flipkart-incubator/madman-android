@@ -27,12 +27,14 @@ import com.flipkart.madman.testutils.VMAPUtil
 import com.flipkart.madman.testutils.anyObject
 import com.flipkart.madman.validator.DefaultXmlValidator
 import com.flipkart.madman.validator.XmlValidator
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.times
+import org.mockito.MockitoAnnotations
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -44,13 +46,19 @@ import org.robolectric.annotation.Config
 @Config(sdk = [21])
 class StringAdLoaderTest {
 
+    private val handler = Handler()
+    private val executor = CurrentThreadExecutor()
+
+    @Before
+    fun setUp() {
+        MockitoAnnotations.initMocks(this)
+    }
+
     /**
      * Test for [StringAdRequest] request ad with given response (response could be valid or invalid)
      */
     @Test
     fun testRequestAdsWithSomeResponse() {
-        val handler = Handler()
-        val executor = CurrentThreadExecutor()
         val mockParserBuilder = Mockito.spy(XmlParser.Builder::class.java)
         val mockParser = mockParserBuilder.build(handler, executor)
 
@@ -102,8 +110,8 @@ class StringAdLoaderTest {
     fun testRequestAdWhenValidationPassesAndFails() {
         val mockValidator = Mockito.mock(XmlValidator::class.java)
         val parser = XmlParser.Builder().build(
-            Handler(),
-            CurrentThreadExecutor()
+            handler,
+            executor
         )
         val loader = StringAdLoader(parser, mockValidator)
 
@@ -163,8 +171,8 @@ class StringAdLoaderTest {
     fun testRequestAdWhenCorruptVMAPReceived() {
         val mockValidator = Mockito.mock(XmlValidator::class.java)
         val parser = XmlParser.Builder().build(
-            Handler(),
-            CurrentThreadExecutor()
+            handler,
+            executor
         )
         val loader = StringAdLoader(parser, mockValidator)
 
