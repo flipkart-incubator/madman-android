@@ -135,7 +135,7 @@ Note: Google AdSense/AdManager Ads will not work with this library due to the ab
 
     The Apache License
     
-    Copyright (c) 2017 Flipkart Internet Pvt. Ltd.
+    Copyright (c) 2020 Flipkart Internet Pvt. Ltd.
     
     Licensed under the Apache License, Version 2.0 (the "License"); 
     you may not use this file except in compliance with the License.
