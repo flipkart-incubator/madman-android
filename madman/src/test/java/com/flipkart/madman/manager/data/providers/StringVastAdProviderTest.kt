@@ -20,10 +20,10 @@ package com.flipkart.madman.manager.data.providers
 
 import com.flipkart.madman.component.model.vast.VASTData
 import com.flipkart.madman.component.model.vmap.AdSource
+import com.flipkart.madman.manager.data.VastAdProvider
 import com.flipkart.madman.testutils.VMAPUtil
 import com.flipkart.madman.testutils.anyObject
 import com.flipkart.madman.testutils.capture
-import com.flipkart.madman.manager.data.VastAdProvider
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,9 +44,6 @@ import org.robolectric.annotation.Config
 class StringVastAdProviderTest {
     @Captor
     private lateinit var errorCaptor: ArgumentCaptor<String>
-
-    @Captor
-    private lateinit var vastDataCaptor: ArgumentCaptor<VASTData>
 
     @Mock
     private lateinit var mockListener: VastAdProvider.Listener
