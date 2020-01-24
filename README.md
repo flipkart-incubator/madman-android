@@ -107,12 +107,12 @@ madman.requestAds(request, adRenderer)
 ```
 
 
-## Getting Started
+## Documentation
 
 For more information, read <b>[Wiki](https://github.com/flipkart-incubator/madman-android/wiki)</b>
 
 
-## What's missing
+## What's missing ?
 
 The following features of VAST are not available in the library yet.
 
@@ -150,9 +150,3 @@ Note: Google AdSense/AdManager Ads will not work with this library due to the ab
     
     See the License for the specific language governing permissions and 
     limitations under the License.
-
-## Contributing
-
-* Fork the repo
-* Apply the changes
-* Submit your pull request
