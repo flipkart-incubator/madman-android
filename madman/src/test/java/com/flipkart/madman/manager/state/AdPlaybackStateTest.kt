@@ -52,7 +52,7 @@ class AdPlaybackStateTest {
 
         val duration = 888F
         val defaultAdBreakFinder = DefaultAdBreakFinder()
-        val response = VMAPUtil.readVMAP()
+        val response = VMAPUtil.readVMAPWithPreRoll()
         val parser = createVMAPParser(response)
 
         /** it contains 3 ad breaks, one pre-roll, one at 15 and post roll **/

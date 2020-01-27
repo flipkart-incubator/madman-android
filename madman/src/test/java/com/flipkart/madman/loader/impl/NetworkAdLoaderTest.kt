@@ -148,7 +148,7 @@ class NetworkAdLoaderTest {
         answer = Answer { invocation ->
             val listener = invocation.getArgument<NetworkListener<String>>(1)
             // return success with valid response
-            listener.onSuccess(200, VMAPUtil.readVMAP())
+            listener.onSuccess(200, VMAPUtil.readVMAPWithPreRoll())
         }
         doAnswer(answer).`when`(mockNetworkLayer).fetch(
             com.flipkart.madman.testutils.anyObject(),

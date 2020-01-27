@@ -72,7 +72,7 @@ class StringAdLoaderTest {
             assert(message != null)
         })
 
-        loader.requestAds(StringAdRequest().apply { response = VMAPUtil.readVMAP() }, {
+        loader.requestAds(StringAdRequest().apply { response = VMAPUtil.readVMAPWithPreRoll() }, {
 
         }, { _: AdErrorType, message: String? ->
             // since response is valid
@@ -115,7 +115,7 @@ class StringAdLoaderTest {
         )
         val loader = StringAdLoader(parser, mockValidator)
 
-        val vmap = VMAPUtil.readVMAP()
+        val vmap = VMAPUtil.readVMAPWithPreRoll()
 
         // when ever validateVMAP gets called, return a valid result
         Mockito.`when`(mockValidator.validateVMAP(anyObject())).thenReturn(object :
