@@ -83,18 +83,20 @@ object VMAPUtil {
         return result
     }
 
-    fun createVMAP(): VMAPData {
+    fun createVMAP(preRoll: Boolean): VMAPData {
         var result = VMAPData()
         XmlParser.Builder().build(Handler(), CurrentThreadExecutor())
-            .parse(readVMAP(), object : XmlParser.ParserListener<VMAPData> {
-                override fun onSuccess(t: VMAPData?) {
-                    result = t ?: result
-                    lock.countDown()
-                }
+            .parse(
+                if (preRoll) readVMAPWithPreRoll() else readVMAP(),
+                object : XmlParser.ParserListener<VMAPData> {
+                    override fun onSuccess(t: VMAPData?) {
+                        result = t ?: result
+                        lock.countDown()
+                    }
 
-                override fun onFailure(type: Int, message: String?) {
-                }
-            })
+                    override fun onFailure(type: Int, message: String?) {
+                    }
+                })
         lock.await(2000, TimeUnit.MILLISECONDS)
         return result
     }
@@ -102,6 +104,10 @@ object VMAPUtil {
     fun createVAST(): VASTData {
         val value = readVAST()
         return createVASTParser(value).parse(value) ?: VASTData()
+    }
+
+    fun readVMAPWithPreRoll(): String {
+        return XmlUtil.readString("vmap_with_preroll.xml")
     }
 
     fun readVMAP(): String {

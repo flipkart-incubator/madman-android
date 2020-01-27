@@ -32,7 +32,7 @@ class XmlParserTest {
             .setVASTParser(mockVASTParser)
             .build(Handler(), CurrentThreadExecutor())
 
-        var response = VMAPUtil.readVMAP()
+        var response = VMAPUtil.readVMAPWithPreRoll()
         parser.parse(response, mockParserListener as XmlParser.ParserListener<VMAPData>)
 
         // verify that vmap parser's parse method gets called one time

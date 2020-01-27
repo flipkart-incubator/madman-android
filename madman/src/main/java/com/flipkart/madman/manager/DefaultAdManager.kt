@@ -31,7 +31,7 @@ import kotlin.math.ceil
 /**
  * Core part of Madman
  */
-class DefaultAdManager(
+open class DefaultAdManager(
     private val data: VMAPData,
     adLoader: AdLoader<NetworkAdRequest>,
     networkLayer: NetworkLayer,

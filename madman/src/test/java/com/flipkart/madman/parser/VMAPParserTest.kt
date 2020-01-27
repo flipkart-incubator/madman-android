@@ -20,7 +20,7 @@ class VMAPParserTest {
      */
     @Test
     fun testValidVMAPResponse() {
-        val response = VMAPUtil.readVMAP()
+        val response = VMAPUtil.readVMAPWithPreRoll()
         val parser = createVMAPParser(response)
         val parsedVMAPData = parser.parse(response)
 
@@ -127,7 +127,7 @@ class VMAPParserTest {
      */
     @Test
     fun testVMAPWithVAST() {
-        val response = VMAPUtil.readVMAP()
+        val response = VMAPUtil.readVMAPWithPreRoll()
 
         val parser = createVMAPParser(response)
         val parsedVMAPData = parser.parse(response)
