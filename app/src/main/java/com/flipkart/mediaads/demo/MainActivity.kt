@@ -23,6 +23,8 @@ class MainActivity : AppCompatActivity() {
                     this@MainActivity,
                     com.flipkart.mediaads.demo.ima.PlayerActivity::class.java
                 )
+                intent.putExtra("url", url.text)
+                intent.putExtra("response", response.text)
                 startActivity(intent)
             }
         }

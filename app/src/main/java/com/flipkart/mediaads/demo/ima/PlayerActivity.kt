@@ -15,7 +15,10 @@ class PlayerActivity : AppCompatActivity() {
         setContentView(R.layout.activity_player)
 
         playerView = findViewById(R.id.video_view);
-        player = PlayerManager(this);
+        player = PlayerManager(
+            this, intent.extras?.get("url").toString(),
+            intent.extras?.get("response").toString()
+        );
     }
 
     public override fun onResume() {
