@@ -13,6 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * Copyright (C) 2020 Flipkart Internet Pvt Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.flipkart.madman.exo.extension
 
 import android.content.Context
@@ -52,8 +68,10 @@ import java.util.*
 /**
  * [AdsLoader] using the Madman SDK. All methods must be called on the main thread.
  *
- * The player instance that will play the loaded ads must be set before playback using [ ][.setPlayer]. If the ads loader is no longer required, it must be released by calling
- * [.release].
+ * The player instance that will play the loaded ads must be set before playback using [ ][.setPlayer]. If the ads loader is no longer required,
+ * it must be released by calling [.release].
+ *
+ * Modified version of the IMAAdsLoader
  */
 class MadmanAdLoader private constructor(
     context: Context,
