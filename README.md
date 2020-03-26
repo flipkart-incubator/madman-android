@@ -12,7 +12,7 @@ The library is designed to
 * help handle ad playback
 * collect and report metrics back to ad servers.
 
-## `Note: It is in alpha stage`
+### `Note: It is in alpha stage`
 
 ## Why Madman ?
 
@@ -142,6 +142,13 @@ dependencies {
 ```
 
 Checkout the demo app and [MadmanPlayerManager](https://github.com/flipkart-incubator/madman-android/blob/master/app/src/main/java/com/flipkart/mediaads/demo/madman/MadmanPlayerManager.java) to understand the integration process in detail.
+
+
+## Demo
+
+This is the demo video of loading a pre-roll ad using the madman library.
+
+![Demo](https://github.com/flipkart-incubator/madman-android/blob/master/files/madman-preroll.gif)
 
 
 ## Documentation
