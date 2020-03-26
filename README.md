@@ -16,37 +16,36 @@ The library is designed to
 
 ## Why Madman ?
 
-* <b>Performance:</b> Initial numbers have shown madman is ~700 ms faster in loading pre-roll ads compared to other libraries such as IMA.
+* <b>Performance</b> 
+
+  Madman uses native views to render ads view as compared to IMA which uses WebView, hence making it slower.
   
-* <b>UI Customisability:</b>
+  Initial numbers have shown madman is ~700 ms faster in loading pre-roll ads compared to other libraries such as IMA.
+  Test env: API-29 emulator, wifi, similar ad response, 5 iterations:
+
+  * IMA: 2.04 seconds
+  * Madman: 1.35 seconds
+
+  The madman is approximately ~700 ms faster in loading the pre-roll ad as compared to IMA.
+
+   #### Load time comparison: 
+
+  ![Comparsion](https://github.com/flipkart-incubator/madman-android/blob/master/files/comparison.gif)
+
+* <b>Full control over the user interface</b>
+
+   The library allows you to have full control over the user interface for the ads view. You can create your own custom layout, or use the library’s default layout to render overlays.
 
   * change skip ad UI
   * change learn more UI
   * change "Ad starting in.." UI
   * custom UI layer
   
-* <b>Features and Extensibility:</b> 
+* <b>Features and Extensibility</b> 
 
-  * Ad starting countdown timer saying ad starting in 5,4 etc
-  * Change backoff strategy for network layer
-  * Change AdBreak finder strategy: It is used to determine which ad break to play given the current position of the player.
+   The library allows you to have your own custom implementation of components such as network layer, xml parser layer. It even allows you to add callbacks for listening to ad events such as “Ad starting in..”.
 
-
-## Performance
-
-Initial numbers for playing pre-roll ads (Test env: API-29 emulator, wifi, similar ad response, 5 iterations):
-
-  * IMA: 2.04 seconds
-  * Madman: 1.35 seconds
-
-The madman is approximately ~700 ms faster in loading the pre-roll ad as compared to IMA.
-
-#### Load time comparison: 
-
-![Comparsion](https://github.com/flipkart-incubator/madman-android/blob/master/files/comparison.gif)
-
-
-## Madman Integration
+## Integration
 
 If you need to integrate directly with the madman library, follow the below steps
 
@@ -66,8 +65,11 @@ Add the madman dependency
 
 ```kotlin
 dependencies {
-   implementation 'com.github.flipkart-incubator.madman:madman:1.0.0' // core madman
-   implementation 'com.github.flipkart-incubator.madman:madman-okhttp:1.0.0' // optional network layer module
+   // core madman library
+   implementation 'com.github.flipkart-incubator.madman:madman:1.0.0'
+   
+   // optional network layer module for fetching vmap/vast from server, sending tracking events etc
+   implementation 'com.github.flipkart-incubator.madman:madman-okhttp:1.0.0' 
 }
 ```
 
@@ -129,7 +131,7 @@ madman.requestAds(request, adRenderer)
 ```
 
 
-## Madman Exo-Player Integration
+## Exo-Player Integration
 
 If you are using exo-player, you can directly use the MadmanAdLoader plugin which acts as a glue between the madman library and exo-player instance.
 
@@ -149,7 +151,7 @@ For more information, read <b>[Wiki](https://github.com/flipkart-incubator/madma
 
 ## What's missing ?
 
-The following features of VAST are not available in the library yet.
+The following features of VAST and VMAP are not available in the library yet:
 
 ### VAST
 * Companion ads
@@ -163,7 +165,7 @@ The following features of VAST are not available in the library yet.
 * Ad break time-offsets such as #1, x% etc. Only format supported for now is HH:MM:SS.mmm
 * Increasing unit test coverage
 
-Note: Google AdSense/AdManager Ads will not work with this library due to the absense of executable media files support
+`Note: Google AdSense/AdManager Ads will not work with this library due to the absense of executable media files support`
 
 
 ## License
