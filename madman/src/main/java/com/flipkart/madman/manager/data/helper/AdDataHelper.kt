@@ -1,25 +1,21 @@
 /*
+ * Copyright (C) 2020 Flipkart Internet Pvt Ltd
  *
- *  * Copyright (C) 2019 Flipkart Internet Pvt Ltd
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *      http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package com.flipkart.madman.manager.data.helper
 
 import com.flipkart.madman.component.model.vast.Ad
-import com.flipkart.madman.component.model.vast.MediaFile
 import com.flipkart.madman.component.model.vast.VASTData
 import com.flipkart.madman.component.model.vast.VideoClicks
 import com.flipkart.madman.component.model.vast.media.BaseAdMedia
@@ -39,9 +35,9 @@ object AdDataHelper {
         val list = mutableListOf<Float>()
         data.adBreaks?.let {
             it.iterator().forEach { adBreak ->
-                when {
-                    adBreak.timeOffset == AdBreak.TimeOffsetTypes.START -> list.add(0F)
-                    adBreak.timeOffset == AdBreak.TimeOffsetTypes.END -> list.add(-1F)
+                when (adBreak.timeOffset) {
+                    AdBreak.TimeOffsetTypes.START -> list.add(0F)
+                    AdBreak.TimeOffsetTypes.END -> list.add(-1F)
                     else -> list.add(adBreak.timeOffsetInSec)
                 }
             }

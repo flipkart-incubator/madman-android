@@ -13,30 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.flipkart.madman.network.backoff
+package com.flipkart.mediaads.demo.helper
 
-/**
- * Back off policy
- */
-interface BackOffPolicy {
-    /**
-     * Maximum retries allowed
-     */
-    fun getMaxRetries(): Int
+import android.content.Context
+import java.io.BufferedInputStream
+import java.io.ByteArrayOutputStream
 
-    /**
-     * The back off multiplier which is used to back off the timer with the
-     * given multiplier
-     */
-    fun getBackOffMultiplier(): Float
+object Utils {
+    @JvmStatic
+    fun readFromAssets(context: Context, fileName: String): String {
+        val inputStream = context.assets.open(fileName)
 
-    /**
-     * back off, returns the next retry time
-     */
-    fun backOff(): Long
+        val bis = BufferedInputStream(inputStream)
+        val buf = ByteArrayOutputStream()
+        var result = bis.read()
+        while (result != -1) {
+            val b = result.toByte()
+            buf.write(b.toInt())
+            result = bis.read()
+        }
 
-    /**
-     * check if retry is possible
-     */
-    fun canRetry(): Boolean
+        return buf.toString()
+    }
 }
