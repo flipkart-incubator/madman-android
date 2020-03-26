@@ -66,10 +66,10 @@ Add the madman dependency
 ```kotlin
 dependencies {
    // core madman library
-   implementation 'com.github.flipkart-incubator.madman:madman:1.0.3'
+   implementation 'com.github.flipkart-incubator.madman:madman:$latest_version'
    
    // optional network layer module for fetching vmap/vast from server, sending tracking events etc
-   implementation 'com.github.flipkart-incubator.madman:madman-okhttp:1.0.3' 
+   implementation 'com.github.flipkart-incubator.madman:madman-okhttp:$latest_version' 
 }
 ```
 
@@ -137,7 +137,7 @@ If you are using exo-player, you can directly use the MadmanAdLoader plugin whic
 
 ```kotlin
 dependencies {
-   implementation 'com.github.flipkart-incubator.madman:madman-exoplayer-extension:1.0.3'
+   implementation 'com.github.flipkart-incubator.madman:madman-exoplayer-extension:$latest_version'
 }
 ```
 
