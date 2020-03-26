@@ -1,153 +1,18 @@
 <vmap:VMAP xmlns:vmap="http://www.iab.net/videosuite/vmap" version="1.0">
-    <style id="night-mode-pro-style" type="text/css" />
-    <link id="night-mode-pro-link" rel="stylesheet" type="text/css" />
     <vmap:AdBreak breakId="preroll" breakType="linear" timeOffset="start">
         <vmap:AdSource allowMultipleAds="false" followRedirects="true" id="preroll-ad-1">
-            <vmap:VASTAdData>
-                <VAST version="3.0">
-                    <Ad id="1" sequence="1">
-                        <InLine>
-                            <AdSystem>Flipkart DSP</AdSystem>
-                            <AdTitle>Flipkart Video Ad</AdTitle>
-                            <Error>
-                                <![CDATA[
-https://tracker-sandbox-m3.stage.flipkart.net/adRenderError?pl=Wr3GYPBKvSNlW5-eVMJRNC4mOEvzvlutl2vtB0kZvhfl0KgFDusyPo-gGKU_0HHhP_aSlrft1WMulcLwkYXAXgU7yJmwm1UkyZWQHGgiqVT4r7PfsU-98ibemuTnoxJkmo-uVxDWy8WIDE99D7eUz-1JGgqF-2o8P3XVrzxD_W8GyqI4GT2wm1Ee6lXOhybL&ve=[ERRORCODE]
+            <vmap:AdTagURI templateType="vast3">
+                <![CDATA[
+https://pubads.g.doubleclick.net/gampad/ads?slotname=/124319096/external/ad_rule_samples&sz=640x480&ciu_szs=300x250&cust_params=deployment%3Ddevsite%26sample_ar%3Dpremidpost&url=https://developers.google.com/interactive-media-ads/docs/sdks/android/tags&unviewed_position_start=1&output=xml_vast3&impl=s&env=vp&gdfp_req=1&ad_rule=0&vad_type=linear&vpos=preroll&pod=1&ppos=1&lip=true&min_ad_duration=0&max_ad_duration=30000&vrid=6256&video_doc_id=short_onecue&cmsid=496&kfa=0&tfcd=0
 ]]>
-                            </Error>
-                            <Impression id="imp1">
-                                <![CDATA[
-https://tracker-sandbox-m3.stage.flipkart.net/adImpression?pl=Wr3GYPBKvSNlW5-eVMJRNC4mOEvzvlutl2vtB0kZvhfl0KgFDusyPo-gGKU_0HHhP_aSlrft1WMulcLwkYXAXgU7yJmwm1UkyZWQHGgiqVT4r7PfsU-98ibemuTnoxJkmo-uVxDWy8WIDE99D7eUz-1JGgqF-2o8P3XVrzxD_W-qrBEnqe0r9RGP1qZVrACZJZQnA88KymlnpZQnnaOjaQ
-]]>
-                            </Impression>
-                            <Impression id="imp2">
-                                <![CDATA[ https://flipkart.com/itr1 ]]>
-                            </Impression>
-                            <Impression id="imp3">
-                                <![CDATA[ https://flipkart.com/itr2 ]]>
-                            </Impression>
-                            <Creatives>
-                                <Creative id="1" sequence="1">
-                                    <Linear>
-                                        <TrackingEvents>
-                                            <Tracking event="start">
-                                                <![CDATA[
-https://tracker-sandbox-m3.stage.flipkart.net/videoAdView?pl=Wr3GYPBKvSNlW5-eVMJRNC4mOEvzvlutl2vtB0kZvhfl0KgFDusyPo-gGKU_0HHhP_aSlrft1WMulcLwkYXAXgU7yJmwm1UkyZWQHGgiqVT4r7PfsU-98ibemuTnoxJkmo-uVxDWy8WIDE99D7eUz-1JGgqF-2o8P3XVrzxD_W_JtVLLH3-tqDlQEG4fK0LjY4HJNyJ3GpK-ikvoqpntjQqK5AVZRYxLqTLQMIDIpeAQWqcLFt_Y1jw5Glnqg7Xs3ptSvOAShMJQP5Ss4xmBGn9_hs5F3rn-6icx5MKC4m6vqim8_c79yZfHfYZVXjfEjJK6y-Zu3DxfaaecMXX5SXvxkG85eQT5EX0ibx3_gGQXHLZNDKg5g6C1pyJI49ss&vt=[CONTENTPLAYHEAD]
-]]>
-                                            </Tracking>
-                                            <Tracking event="firstQuartile">
-                                                <![CDATA[
-https://tracker-sandbox-m3.stage.flipkart.net/videoAdView?pl=Wr3GYPBKvSNlW5-eVMJRNC4mOEvzvlutl2vtB0kZvhfl0KgFDusyPo-gGKU_0HHhP_aSlrft1WMulcLwkYXAXgU7yJmwm1UkyZWQHGgiqVT4r7PfsU-98ibemuTnoxJkmo-uVxDWy8WIDE99D7eUz-1JGgqF-2o8P3XVrzxD_W_JtVLLH3-tqDlQEG4fK0LjY4HJNyJ3GpK-ikvoqpntjQqK5AVZRYxLqTLQMIDIpeAQWqcLFt_Y1jw5Glnqg7Xs3ptSvOAShMJQP5Ss4xmBGn9_hs5F3rn-6icx5MKC4m6vqim8_c79yZfHfYZVXjfEjJK6y-Zu3DxfaaecMXX5SXvxkG85eQT5EX0ibx3_gGRry9PTJuPpfLFWL3LahFNy&vt=[CONTENTPLAYHEAD]
-]]>
-                                            </Tracking>
-                                            <Tracking event="midpoint">
-                                                <![CDATA[
-https://tracker-sandbox-m3.stage.flipkart.net/videoAdView?pl=Wr3GYPBKvSNlW5-eVMJRNC4mOEvzvlutl2vtB0kZvhfl0KgFDusyPo-gGKU_0HHhP_aSlrft1WMulcLwkYXAXgU7yJmwm1UkyZWQHGgiqVT4r7PfsU-98ibemuTnoxJkmo-uVxDWy8WIDE99D7eUz-1JGgqF-2o8P3XVrzxD_W_JtVLLH3-tqDlQEG4fK0LjY4HJNyJ3GpK-ikvoqpntjQqK5AVZRYxLqTLQMIDIpeAQWqcLFt_Y1jw5Glnqg7Xs3ptSvOAShMJQP5Ss4xmBGn9_hs5F3rn-6icx5MKC4m6vqim8_c79yZfHfYZVXjfEjJK6y-Zu3DxfaaecMXX5SXvxkG85eQT5EX0ibx3_gGS_Ya4gse4MDCs-M8XNjRbY&vt=[CONTENTPLAYHEAD]
-]]>
-                                            </Tracking>
-                                            <Tracking event="thirdQuartile">
-                                                <![CDATA[
-https://tracker-sandbox-m3.stage.flipkart.net/videoAdView?pl=Wr3GYPBKvSNlW5-eVMJRNC4mOEvzvlutl2vtB0kZvhfl0KgFDusyPo-gGKU_0HHhP_aSlrft1WMulcLwkYXAXgU7yJmwm1UkyZWQHGgiqVT4r7PfsU-98ibemuTnoxJkmo-uVxDWy8WIDE99D7eUz-1JGgqF-2o8P3XVrzxD_W_JtVLLH3-tqDlQEG4fK0LjY4HJNyJ3GpK-ikvoqpntjQqK5AVZRYxLqTLQMIDIpeAQWqcLFt_Y1jw5Glnqg7Xs3ptSvOAShMJQP5Ss4xmBGn9_hs5F3rn-6icx5MKC4m6vqim8_c79yZfHfYZVXjfEjJK6y-Zu3DxfaaecMXX5SXvxkG85eQT5EX0ibx3_gGSWXgN3lH6IWvIz3P6FBD45&vt=[CONTENTPLAYHEAD]
-]]>
-                                            </Tracking>
-                                            <Tracking event="complete">
-                                                <![CDATA[
-https://tracker-sandbox-m3.stage.flipkart.net/videoAdView?pl=Wr3GYPBKvSNlW5-eVMJRNC4mOEvzvlutl2vtB0kZvhfl0KgFDusyPo-gGKU_0HHhP_aSlrft1WMulcLwkYXAXgU7yJmwm1UkyZWQHGgiqVT4r7PfsU-98ibemuTnoxJkmo-uVxDWy8WIDE99D7eUz-1JGgqF-2o8P3XVrzxD_W_JtVLLH3-tqDlQEG4fK0LjY4HJNyJ3GpK-ikvoqpntjQqK5AVZRYxLqTLQMIDIpeAQWqcLFt_Y1jw5Glnqg7Xs3ptSvOAShMJQP5Ss4xmBGn9_hs5F3rn-6icx5MKC4m6vqim8_c79yZfHfYZVXjfEjJK6y-Zu3DxfaaecMXX5SXvxkG85eQT5EX0ibx3_gGSgw-MnCVSFMTrWJ_eXNJm-&vt=[CONTENTPLAYHEAD]
-]]>
-                                            </Tracking>
-                                            <Tracking event="skip">
-                                                <![CDATA[
-https://tracker-sandbox-m3.stage.flipkart.net/adInteraction?pl=Wr3GYPBKvSNlW5-eVMJRNC4mOEvzvlutl2vtB0kZvhfl0KgFDusyPo-gGKU_0HHhP_aSlrft1WMulcLwkYXAXgU7yJmwm1UkyZWQHGgiqVT4r7PfsU-98ibemuTnoxJkmo-uVxDWy8WIDE99D7eUz-1JGgqF-2o8P3XVrzxD_W8n9Z4XY8CtkPF1tKnfn6sf&vt=[CONTENTPLAYHEAD]
-]]>
-                                            </Tracking>
-                                            <Tracking event="fullscreen">
-                                                <![CDATA[
-https://tracker-sandbox-m3.stage.flipkart.net/adInteraction?pl=Wr3GYPBKvSNlW5-eVMJRNC4mOEvzvlutl2vtB0kZvhfl0KgFDusyPo-gGKU_0HHhP_aSlrft1WMulcLwkYXAXgU7yJmwm1UkyZWQHGgiqVT4r7PfsU-98ibemuTnoxJkmo-uVxDWy8WIDE99D7eUz-1JGgqF-2o8P3XVrzxD_W8mmGMFNY8H5puHdjmLpvxY&vt=[CONTENTPLAYHEAD]
-]]>
-                                            </Tracking>
-                                            <Tracking event="exitFullscreen">
-                                                <![CDATA[
-https://tracker-sandbox-m3.stage.flipkart.net/adInteraction?pl=Wr3GYPBKvSNlW5-eVMJRNC4mOEvzvlutl2vtB0kZvhfl0KgFDusyPo-gGKU_0HHhP_aSlrft1WMulcLwkYXAXgU7yJmwm1UkyZWQHGgiqVT4r7PfsU-98ibemuTnoxJkmo-uVxDWy8WIDE99D7eUz-1JGgqF-2o8P3XVrzxD_W86IFxeWBz4wdfOoWvnXpL-&vt=[CONTENTPLAYHEAD]
-]]>
-                                            </Tracking>
-                                            <Tracking event="mute">
-                                                <![CDATA[
-https://tracker-sandbox-m3.stage.flipkart.net/adInteraction?pl=Wr3GYPBKvSNlW5-eVMJRNC4mOEvzvlutl2vtB0kZvhfl0KgFDusyPo-gGKU_0HHhP_aSlrft1WMulcLwkYXAXgU7yJmwm1UkyZWQHGgiqVT4r7PfsU-98ibemuTnoxJkmo-uVxDWy8WIDE99D7eUz-1JGgqF-2o8P3XVrzxD_W-02PM68BOztD1N5Hk5dohh&vt=[CONTENTPLAYHEAD]
-]]>
-                                            </Tracking>
-                                            <Tracking event="unmute">
-                                                <![CDATA[
-https://tracker-sandbox-m3.stage.flipkart.net/adInteraction?pl=Wr3GYPBKvSNlW5-eVMJRNC4mOEvzvlutl2vtB0kZvhfl0KgFDusyPo-gGKU_0HHhP_aSlrft1WMulcLwkYXAXgU7yJmwm1UkyZWQHGgiqVT4r7PfsU-98ibemuTnoxJkmo-uVxDWy8WIDE99D7eUz-1JGgqF-2o8P3XVrzxD_W_YRQFtf0QJCkBj3H8efTKw&vt=[CONTENTPLAYHEAD]
-]]>
-                                            </Tracking>
-                                            <Tracking event="pause">
-                                                <![CDATA[
-https://tracker-sandbox-m3.stage.flipkart.net/adInteraction?pl=Wr3GYPBKvSNlW5-eVMJRNC4mOEvzvlutl2vtB0kZvhfl0KgFDusyPo-gGKU_0HHhP_aSlrft1WMulcLwkYXAXgU7yJmwm1UkyZWQHGgiqVT4r7PfsU-98ibemuTnoxJkmo-uVxDWy8WIDE99D7eUz-1JGgqF-2o8P3XVrzxD_W-kBhaxd1Mc_5DXwTheNaEP&vt=[CONTENTPLAYHEAD]
-]]>
-                                            </Tracking>
-                                            <Tracking event="rewind">
-                                                <![CDATA[
-https://tracker-sandbox-m3.stage.flipkart.net/adInteraction?pl=Wr3GYPBKvSNlW5-eVMJRNC4mOEvzvlutl2vtB0kZvhfl0KgFDusyPo-gGKU_0HHhP_aSlrft1WMulcLwkYXAXgU7yJmwm1UkyZWQHGgiqVT4r7PfsU-98ibemuTnoxJkmo-uVxDWy8WIDE99D7eUz-1JGgqF-2o8P3XVrzxD_W8gTEuy6_VRSRTXEpgo7Wy8&vt=[CONTENTPLAYHEAD]
-]]>
-                                            </Tracking>
-                                            <Tracking event="resume">
-                                                <![CDATA[
-https://tracker-sandbox-m3.stage.flipkart.net/adInteraction?pl=Wr3GYPBKvSNlW5-eVMJRNC4mOEvzvlutl2vtB0kZvhfl0KgFDusyPo-gGKU_0HHhP_aSlrft1WMulcLwkYXAXgU7yJmwm1UkyZWQHGgiqVT4r7PfsU-98ibemuTnoxJkmo-uVxDWy8WIDE99D7eUz-1JGgqF-2o8P3XVrzxD_W_Zxv5g4sEcCQfArxyAS60Q&vt=[CONTENTPLAYHEAD]
-]]>
-                                            </Tracking>
-                                            <Tracking event="expand">
-                                                <![CDATA[
-https://tracker-sandbox-m3.stage.flipkart.net/adInteraction?pl=Wr3GYPBKvSNlW5-eVMJRNC4mOEvzvlutl2vtB0kZvhfl0KgFDusyPo-gGKU_0HHhP_aSlrft1WMulcLwkYXAXgU7yJmwm1UkyZWQHGgiqVT4r7PfsU-98ibemuTnoxJkmo-uVxDWy8WIDE99D7eUz-1JGgqF-2o8P3XVrzxD_W-9xpu5YUWBkj-A4kjIq7sq&vt=[CONTENTPLAYHEAD]
-]]>
-                                            </Tracking>
-                                            <Tracking event="collapse">
-                                                <![CDATA[
-https://tracker-sandbox-m3.stage.flipkart.net/adInteraction?pl=Wr3GYPBKvSNlW5-eVMJRNC4mOEvzvlutl2vtB0kZvhfl0KgFDusyPo-gGKU_0HHhP_aSlrft1WMulcLwkYXAXgU7yJmwm1UkyZWQHGgiqVT4r7PfsU-98ibemuTnoxJkmo-uVxDWy8WIDE99D7eUz-1JGgqF-2o8P3XVrzxD_W8G9r_5adRPOsWUJZCjY8_FtFPognlYBV9jBDiwCE0ZPA&vt=[CONTENTPLAYHEAD]
-]]>
-                                            </Tracking>
-                                        </TrackingEvents>
-                                        <VideoClicks>
-                                            <ClickThrough id="fkClickThroughId">
-                                                <![CDATA[
-https://www.flipkart.com/wearable-smart-devices/smart-bands/pr?sid=ajy%2Cq7p&otracker=nmenu_sub_Electronics_0_Smart%20Bands
-]]>
-                                            </ClickThrough>
-                                            <ClickTracking id="click1">
-                                                <![CDATA[
-https://tracker-sandbox-m3.stage.flipkart.net/videoAdClick?pl=Wr3GYPBKvSNlW5-eVMJRNC4mOEvzvlutl2vtB0kZvhfl0KgFDusyPo-gGKU_0HHhP_aSlrft1WMulcLwkYXAXgU7yJmwm1UkyZWQHGgiqVT4r7PfsU-98ibemuTnoxJkmo-uVxDWy8WIDE99D7eUz-1JGgqF-2o8P3XVrzxD_W8GyqI4GT2wm1Ee6lXOhybL&vt=[CONTENTPLAYHEAD]
-]]>
-                                            </ClickTracking>
-                                            <ClickTracking id="click2">
-                                                <![CDATA[ https://flipkart.com/ctr1 ]]>
-                                            </ClickTracking>
-                                            <ClickTracking id="click3">
-                                                <![CDATA[ https://flipkart.com/ctr2 ]]>
-                                            </ClickTracking>
-                                        </VideoClicks>
-                                        <Duration>00:00:30.000</Duration>
-                                        <MediaFiles>
-                                            <MediaFile delivery="streaming" height="720"
-                                                id="mediaId1" maintainAspectRatio="true"
-                                                scalable="true" type="application/x-mpegURL"
-                                                width="1280">
-                                                <![CDATA[
-https://trinity-fk.akamaized.net/fk3penc/encWs%2FF7kUfEno5eW3z7xvZADIQn5m%2BkEjXSA307S2UP8vxQDpc4vYbglUgAmDdSW2q/master.m3u8
-]]>
-                                            </MediaFile>
-                                        </MediaFiles>
-                                    </Linear>
-                                </Creative>
-                            </Creatives>
-                        </InLine>
-                    </Ad>
-                </VAST>
-            </vmap:VASTAdData>
+            </vmap:AdTagURI>
         </vmap:AdSource>
     </vmap:AdBreak>
     <vmap:AdBreak breakId="midroll-1" breakType="linear" timeOffset="00:00:15.000">
         <vmap:AdSource allowMultipleAds="false" followRedirects="true" id="midroll-1-ad-1">
             <vmap:AdTagURI templateType="vast3">
                 <![CDATA[
-https://cors-anywhere.herokuapp.com/https://www.thekirankumar.com/blog/vast/vast.xml
+https://pubads.g.doubleclick.net/gampad/ads?slotname=/124319096/external/ad_rule_samples&sz=640x480&ciu_szs=300x250&cust_params=deployment%3Ddevsite%26sample_ar%3Dpremidpost&url=https://developers.google.com/interactive-media-ads/docs/sdks/android/tags&unviewed_position_start=1&output=xml_vast3&impl=s&env=vp&gdfp_req=1&ad_rule=0&cue=15000&vad_type=linear&vpos=midroll&pod=2&mridx=1&rmridx=1&ppos=1&lip=true&min_ad_duration=0&max_ad_duration=30000&vrid=6256&video_doc_id=short_onecue&cmsid=496&kfa=0&tfcd=0
 ]]>
             </vmap:AdTagURI>
         </vmap:AdSource>
@@ -156,7 +21,7 @@ https://cors-anywhere.herokuapp.com/https://www.thekirankumar.com/blog/vast/vast
         <vmap:AdSource allowMultipleAds="false" followRedirects="true" id="postroll-ad-1">
             <vmap:AdTagURI templateType="vast3">
                 <![CDATA[
-https://cors-anywhere.herokuapp.com/https://www.thekirankumar.com/blog/vast/vast.xml
+https://pubads.g.doubleclick.net/gampad/ads?slotname=/124319096/external/ad_rule_samples&sz=640x480&ciu_szs=300x250&cust_params=deployment%3Ddevsite%26sample_ar%3Dpremidpost&url=https://developers.google.com/interactive-media-ads/docs/sdks/android/tags&unviewed_position_start=1&output=xml_vast3&impl=s&env=vp&gdfp_req=1&ad_rule=0&vad_type=linear&vpos=postroll&pod=3&ppos=1&lip=true&min_ad_duration=0&max_ad_duration=30000&vrid=6256&video_doc_id=short_onecue&cmsid=496&kfa=0&tfcd=0
 ]]>
             </vmap:AdTagURI>
         </vmap:AdSource>
