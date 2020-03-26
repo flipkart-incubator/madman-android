@@ -46,9 +46,14 @@ The madman is approximately ~700 ms faster in loading the pre-roll ad as compare
 ![Comparsion](https://github.com/flipkart-incubator/madman-android/blob/master/files/comparison.gif)
 
 
-## Get Madman
+## Madman Integration
 
-Add it in your root build.gradle at the end of repositories :
+If you need to integrate directly with the madman library, follow the below steps
+
+### 1. Get Madman
+
+Add the jitpack dependency in your root build.gradle
+
 ```kotlin
 allprojects {
   repositories {
@@ -57,54 +62,84 @@ allprojects {
 }
 ```
 
-Add the dependencies :
+Add the madman dependency
 
-* Library :
 ```kotlin
 dependencies {
-  implementation 'com.github.flipkart-incubator.madman:madman:1.0.0'
+   implementation 'com.github.flipkart-incubator.madman:madman:1.0.0' // core madman
+   implementation 'com.github.flipkart-incubator.madman:madman-okhttp:1.0.0' // optional network layer module
 }
 ```
 
-* Network Module :
-```kotlin
-dependencies {
-  implementation 'com.github.flipkart-incubator.madman:madman-okhttp:1.0.0'
-}
-```
+### 2. Initialise Madman
 
-## How to use ?
-
-#### Initiliase the Madman instance 
 ```kotlin
 val madman = Madman.Builder()
-             .setAdErrorListener(this)
-             .setAdLoadListener(this)
-             .setNetworkLayer(DefaultNetworkLayer(context))
-             .setAdEventListener(this)
-             .build(context)
+              .setAdErrorListener(this) // ad error callbacks
+              .setAdLoadListener(this) // ad load callbacks
+              .setNetworkLayer(DefaultNetworkLayer(context)) // use the default network layer, override if necessary
+              .setAdEventListener(this) // ad event callbacks
+              .build(context)
 ```
 
-#### Create AdRenderer
+Read the [doc](https://github.com/flipkart-incubator/madman-android/wiki/Madman) to understand the components in detail.
+
+### 3. Create AdRenderer
+
+AdRenderer houses the logic for rendering the UI components on the top of the ad. The library provides a default layout for the ad overlay, which can be overriden if required. 
+
 ```kotlin
-val adRenderer = DefaultAdRenderer.Builder().setPlayer(this).setContainer(adViewGroup).build(null)
+val adRenderer = DefaultAdRenderer.Builder()
+		  .setPlayer(this) // player interface
+		  .setContainer(adViewGroup) // parent view to which the overlay gets added
+		  .build(null) // passing null will fallback to default UI layout
 ```
 
-#### Request Ads
+To override the default layout, create a new `AdViewBinder` and pass it while calling `build` on the AdRenderer
 
-1. <b>From Network</b>
+```kotlin
+val adViewBinder = AdViewBinder.Builder()
+	            .setLayoutId(R.layout.ad_overlay) // layout of custom ad overlay
+		    .setSkipViewId(R.id.skip_button) // specify the skip view id
+		    .setClickThroughViewId(R.id.click_throught_button) // specify the learn more view id
+		    .build()
+
+val adRenderer = DefaultAdRenderer.Builder()
+		  .setPlayer(this) // player interface
+		  .setContainer(adViewGroup) // parent view to which the overlay gets added
+		  .build(adViewBinder) // passing custom ad view binder
+```
+
+### 4. Request Ads
+
+* From network:
+
 ```kotlin
 val request = NetworkAdRequest()
 request.setUrl(adTagUri.toString())
 madman.requestAds(request, adRenderer)
 ```
 
-2. <b>From Local</b>
+* From local cache:
+
 ```kotlin
 val request = StringAdRequest()
-request.setResponse("")
+request.setResponse(adResponse)
 madman.requestAds(request, adRenderer)
 ```
+
+
+## Madman Exo-Player Integration
+
+If you are using exo-player, you can directly use the MadmanAdLoader plugin which acts as a glue between the madman library and exo-player instance.
+
+```kotlin
+dependencies {
+   implementation 'com.github.flipkart-incubator.madman:madman-exoplayer-extension:1.0.0'
+}
+```
+
+Checkout the demo app and [MadmanPlayerManager](https://github.com/flipkart-incubator/madman-android/blob/master/app/src/main/java/com/flipkart/mediaads/demo/madman/MadmanPlayerManager.java) to understand the integration process in detail.
 
 
 ## Documentation
