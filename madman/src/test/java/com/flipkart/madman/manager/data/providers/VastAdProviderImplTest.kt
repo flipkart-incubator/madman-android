@@ -19,9 +19,9 @@ package com.flipkart.madman.manager.data.providers
 import com.flipkart.madman.component.model.vast.VASTData
 import com.flipkart.madman.component.model.vmap.AdSource
 import com.flipkart.madman.component.model.vmap.AdTagURI
+import com.flipkart.madman.manager.data.VastAdProvider
 import com.flipkart.madman.testutils.VMAPUtil
 import com.flipkart.madman.testutils.anyObject
-import com.flipkart.madman.manager.data.VastAdProvider
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith

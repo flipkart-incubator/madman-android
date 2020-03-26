@@ -40,7 +40,10 @@ class StringAdLoader(
         param.response?.let {
             parseResponse(it, onSuccess, onFailure)
         } ?: run {
-            onFailure(AdErrorType.AD_REQUEST_MALFORMED, StringErrorConstants.STRING_REQUEST_MALFORMED)
+            onFailure(
+                AdErrorType.AD_REQUEST_MALFORMED,
+                StringErrorConstants.STRING_REQUEST_MALFORMED
+            )
         }
     }
 }

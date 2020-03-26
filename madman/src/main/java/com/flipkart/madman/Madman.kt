@@ -127,7 +127,12 @@ class Madman internal constructor(
             adLoadListener.onAdManagerLoaded(adsManager)
         }, { adErrorType: AdErrorType, message: String? ->
             /** failure case **/
-            adErrorListener.onAdError(AdError(adErrorType, message ?: StringErrorConstants.GENERIC_ERROR))
+            adErrorListener.onAdError(
+                AdError(
+                    adErrorType,
+                    message ?: StringErrorConstants.GENERIC_ERROR
+                )
+            )
         })
     }
 

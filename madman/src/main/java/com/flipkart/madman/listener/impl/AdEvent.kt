@@ -16,8 +16,8 @@
 package com.flipkart.madman.listener.impl
 
 import com.flipkart.madman.component.enums.AdEventType
-import com.flipkart.madman.manager.model.AdElement
 import com.flipkart.madman.listener.AdEventListener
+import com.flipkart.madman.manager.model.AdElement
 
 /**
  * Ad event implementation, passed as an argument in the event callback interface [AdEventListener]

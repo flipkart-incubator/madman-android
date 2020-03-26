@@ -21,11 +21,11 @@ import com.flipkart.madman.component.model.vast.VASTData
 import com.flipkart.madman.component.model.vmap.AdSource
 import com.flipkart.madman.component.model.vmap.AdTagURI
 import com.flipkart.madman.component.model.vmap.VMAPData
-import com.flipkart.madman.testutils.VMAPUtil
-import com.flipkart.madman.testutils.capture
 import com.flipkart.madman.loader.AdLoader
 import com.flipkart.madman.manager.data.VastAdProvider
 import com.flipkart.madman.network.model.NetworkAdRequest
+import com.flipkart.madman.testutils.VMAPUtil
+import com.flipkart.madman.testutils.capture
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith

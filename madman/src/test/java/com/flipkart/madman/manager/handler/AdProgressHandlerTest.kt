@@ -16,9 +16,9 @@
 
 package com.flipkart.madman.manager.handler
 
-import com.flipkart.madman.testutils.anyObject
 import com.flipkart.madman.provider.AdProgressProvider
 import com.flipkart.madman.provider.Progress
+import com.flipkart.madman.testutils.anyObject
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith

@@ -16,9 +16,9 @@
 
 package com.flipkart.madman.manager.handler
 
-import com.flipkart.madman.testutils.anyObject
 import com.flipkart.madman.provider.ContentProgressProvider
 import com.flipkart.madman.provider.Progress
+import com.flipkart.madman.testutils.anyObject
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -58,7 +58,8 @@ class ContentProgressHandlerTest {
 
         progressHandler.sendMessage()
         /** verify listener is called once **/
-        Mockito.verify(progressUpdateListener, Mockito.times(1)).onContentProgressUpdate(anyObject())
+        Mockito.verify(progressUpdateListener, Mockito.times(1))
+            .onContentProgressUpdate(anyObject())
 
         Mockito.reset(progressUpdateListener)
 
@@ -66,14 +67,16 @@ class ContentProgressHandlerTest {
         progressHandler.sendMessage()
         progressHandler.sendMessage()
         /** verify listener is called thrice **/
-        Mockito.verify(progressUpdateListener, Mockito.times(3)).onContentProgressUpdate(anyObject())
+        Mockito.verify(progressUpdateListener, Mockito.times(3))
+            .onContentProgressUpdate(anyObject())
 
         Mockito.reset(progressUpdateListener)
 
         progressHandler.removeListener(progressUpdateListener)
         progressHandler.sendMessage()
         /** verify listener is not called as not listeners attached **/
-        Mockito.verify(progressUpdateListener, Mockito.times(0)).onContentProgressUpdate(anyObject())
+        Mockito.verify(progressUpdateListener, Mockito.times(0))
+            .onContentProgressUpdate(anyObject())
 
         Mockito.reset(progressUpdateListener)
 
@@ -81,13 +84,15 @@ class ContentProgressHandlerTest {
         progressHandler.removeMessages()
         progressHandler.sendMessage()
         /** verify listener is called once **/
-        Mockito.verify(progressUpdateListener, Mockito.times(1)).onContentProgressUpdate(anyObject())
+        Mockito.verify(progressUpdateListener, Mockito.times(1))
+            .onContentProgressUpdate(anyObject())
 
         Mockito.reset(progressUpdateListener)
 
         progressHandler.sendMessage()
         progressHandler.removeMessages()
         /** verify listener is called once **/
-        Mockito.verify(progressUpdateListener, Mockito.times(1)).onContentProgressUpdate(anyObject())
+        Mockito.verify(progressUpdateListener, Mockito.times(1))
+            .onContentProgressUpdate(anyObject())
     }
 }

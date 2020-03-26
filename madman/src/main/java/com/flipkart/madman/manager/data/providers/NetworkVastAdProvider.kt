@@ -59,7 +59,10 @@ class NetworkVastAdProvider(private val adLoader: AdLoader<NetworkAdRequest>) :
                         )
                     }
                 }, { adErrorType: AdErrorType, message: String? ->
-                    listener.onVastFetchError(adErrorType, message ?: StringErrorConstants.GENERIC_ERROR)
+                    listener.onVastFetchError(
+                        adErrorType,
+                        message ?: StringErrorConstants.GENERIC_ERROR
+                    )
                 })
             } ?: run {
                 listener.onVastFetchError(
