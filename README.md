@@ -16,7 +16,7 @@ The library is designed to
 
 ## Why Madman ?
 
-* <b>Performance</b> 
+### Performance
 
   Madman uses native views to render ads view as compared to IMA which uses WebView, hence making it slower.
   
@@ -32,7 +32,7 @@ The library is designed to
 
   ![Comparsion](https://github.com/flipkart-incubator/madman-android/blob/master/files/comparison.gif)
 
-* <b>Full control over the user interface</b>
+### Full control over the user interface
 
    The library allows you to have full control over the user interface for the ads view. You can create your own custom layout, or use the library’s default layout to render overlays.
 
@@ -41,7 +41,7 @@ The library is designed to
   * change "Ad starting in.." UI
   * custom UI layer
   
-* <b>Features and Extensibility</b> 
+### Features and Extensibility
 
    The library allows you to have your own custom implementation of components such as network layer, xml parser layer. It even allows you to add callbacks for listening to ad events such as “Ad starting in..”.
 
