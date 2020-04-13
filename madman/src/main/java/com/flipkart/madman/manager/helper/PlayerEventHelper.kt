@@ -52,7 +52,6 @@ class PlayerEventHelper(private val player: AdPlayer) {
                 }
             }
             Event.PLAY_AD -> {
-                fireEventToListeners(AdEventType.CONTENT_PAUSE_REQUESTED, adElement)
                 player.playAd()
             }
             Event.RESUME_AD -> {

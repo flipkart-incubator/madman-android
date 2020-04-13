@@ -51,6 +51,11 @@ interface AdRenderer : AdPlayerProvider {
     fun removeView()
 
     /**
+     * toggle the view visibility
+     */
+    fun toggleViewVisibility(show: Boolean)
+
+    /**
      * destroy
      */
     fun destroy()

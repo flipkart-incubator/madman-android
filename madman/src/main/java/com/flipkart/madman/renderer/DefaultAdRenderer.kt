@@ -85,6 +85,8 @@ open class DefaultAdRenderer private constructor(
 
     override fun renderView(adElement: AdElement) {
         view?.let {
+            toggleViewVisibility(true)
+
             val adViewHolder = viewHolders[it]
 
             /** attach listener on the whole view **/
@@ -192,6 +194,14 @@ open class DefaultAdRenderer private constructor(
 
     override fun removeView() {
         container.removeView(view)
+    }
+
+    override fun toggleViewVisibility(show: Boolean) {
+        if (show) {
+            view?.visibility = View.VISIBLE
+        } else {
+            view?.visibility = View.GONE
+        }
     }
 
     /**

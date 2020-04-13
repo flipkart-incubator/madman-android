@@ -416,31 +416,35 @@ class MadmanAdLoader private constructor(
         if (player == null) {
             return lastContentProgress ?: Progress.UNDEFINED
         }
-        val hasContentDuration = contentDurationMs != C.TIME_UNSET
+        val hasContentDuration =
+            contentDurationMs != C.TIME_UNSET
         val contentPositionMs: Long
         if (pendingContentPositionMs != C.TIME_UNSET) {
             sentPendingContentPositionMs = true
             contentPositionMs = pendingContentPositionMs
-            expectedAdGroupIndex =
-                adPlaybackState.getAdGroupIndexForPositionUs(C.msToUs(contentPositionMs))
+            expectedAdGroupIndex = adPlaybackState.getAdGroupIndexForPositionUs(
+                C.msToUs(contentPositionMs)
+            )
         } else if (fakeContentProgressElapsedRealtimeMs != C.TIME_UNSET) {
             val elapsedSinceEndMs =
                 SystemClock.elapsedRealtime() - fakeContentProgressElapsedRealtimeMs
             contentPositionMs = fakeContentProgressOffsetMs + elapsedSinceEndMs
-            expectedAdGroupIndex =
-                adPlaybackState.getAdGroupIndexForPositionUs(C.msToUs(contentPositionMs))
-        } else if (sentContentComplete) {
-            contentPositionMs = this.contentDurationMs
+            expectedAdGroupIndex = adPlaybackState.getAdGroupIndexForPositionUs(
+                C.msToUs(contentPositionMs)
+            )
         } else if (adState == AD_STATE_NONE && !playingAd && hasContentDuration) {
             contentPositionMs = player?.currentPosition ?: 0
             // Update the expected ad group index for the current content position. The update is delayed
-            // until MAXIMUM_PRELOAD_DURATION_MS before the ad so that an ad group load error delivered
-            // just after an ad group isn't incorrectly attributed to the next ad group.
+// until MAXIMUM_PRELOAD_DURATION_MS before the ad so that an ad group load error delivered
+// just after an ad group isn't incorrectly attributed to the next ad group.
             val nextAdGroupIndex = adPlaybackState.getAdGroupIndexAfterPositionUs(
-                C.msToUs(contentPositionMs), C.msToUs(contentDurationMs)
+                C.msToUs(contentPositionMs),
+                C.msToUs(contentDurationMs)
             )
             if (nextAdGroupIndex != expectedAdGroupIndex && nextAdGroupIndex != C.INDEX_UNSET) {
-                var nextAdGroupTimeMs = C.usToMs(adPlaybackState.adGroupTimesUs[nextAdGroupIndex])
+                var nextAdGroupTimeMs = C.usToMs(
+                    adPlaybackState.adGroupTimesUs[nextAdGroupIndex]
+                )
                 if (nextAdGroupTimeMs == C.TIME_END_OF_SOURCE) {
                     nextAdGroupTimeMs = contentDurationMs
                 }
@@ -449,11 +453,10 @@ class MadmanAdLoader private constructor(
                 }
             }
         } else {
-            return Progress(-1, -1)
+            return Progress.UNDEFINED
         }
         val contentDurationMs =
-            if (hasContentDuration) this.contentDurationMs else DURATION_UNSET
-
+            if (hasContentDuration) contentDurationMs else DURATION_UNSET
         return Progress(contentPositionMs, contentDurationMs)
     }
 
@@ -647,6 +650,10 @@ class MadmanAdLoader private constructor(
     }
 
     override fun onPositionDiscontinuity(@Player.DiscontinuityReason reason: Int) {
+        Log.d(
+            TAG,
+            "onTimelineChanged/onPositionDiscontinuity"
+        )
         if (adsManager == null) {
             return
         }
@@ -953,7 +960,7 @@ class MadmanAdLoader private constructor(
     private fun getAdIndexInAdGroupToLoad(adGroupIndex: Int): Int {
         @AdState val states = adPlaybackState.adGroups?.get(adGroupIndex)?.states ?: IntArray(0)
         var adIndexInAdGroup = 0
-        while ((adIndexInAdGroup < states.size && states[adIndexInAdGroup] != AdPlaybackState.AD_STATE_UNAVAILABLE)) {
+        while (adIndexInAdGroup < states.size && states[adIndexInAdGroup] != AdPlaybackState.AD_STATE_UNAVAILABLE) {
             adIndexInAdGroup++
         }
         return if (adIndexInAdGroup == states.size) C.INDEX_UNSET else adIndexInAdGroup

@@ -22,7 +22,7 @@ import com.flipkart.madman.renderer.player.AdPlayer
  */
 abstract class AdPlayerCallback : AdPlayer.AdPlayerCallback {
     override fun onPlay() {
-        onAdPlay()
+        onAdPlayCallback()
     }
 
     override fun onVolumeChanged(volume: Int) {
@@ -30,7 +30,7 @@ abstract class AdPlayerCallback : AdPlayer.AdPlayerCallback {
     }
 
     override fun onPause() {
-        onAdPause()
+        onAdPauseCallback()
     }
 
     override fun onLoaded() {
@@ -38,15 +38,15 @@ abstract class AdPlayerCallback : AdPlayer.AdPlayerCallback {
     }
 
     override fun onResume() {
-        onAdResume()
+        onAdResumeCallback()
     }
 
     override fun onEnded() {
-        onAdEnded()
+        onAdEndedCallback()
     }
 
     override fun onError() {
-        onAdError()
+        onAdErrorCallback()
     }
 
     override fun onBuffering() {
@@ -56,25 +56,25 @@ abstract class AdPlayerCallback : AdPlayer.AdPlayerCallback {
     /**
      * on ad play callback from the player
      */
-    protected abstract fun onAdPlay()
+    protected abstract fun onAdPlayCallback()
 
     /**
      * on ad ended callback from the player
      */
-    protected abstract fun onAdEnded()
+    protected abstract fun onAdEndedCallback()
 
     /**
      * on ad error callback from the player
      */
-    protected abstract fun onAdError()
+    protected abstract fun onAdErrorCallback()
 
     /**
      * on ad pause callback from the player
      */
-    protected abstract fun onAdPause()
+    protected abstract fun onAdPauseCallback()
 
     /**
      * on ad resume callback from the player
      */
-    protected abstract fun onAdResume()
+    protected abstract fun onAdResumeCallback()
 }

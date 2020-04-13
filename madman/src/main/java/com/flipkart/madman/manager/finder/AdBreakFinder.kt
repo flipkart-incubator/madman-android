@@ -24,12 +24,12 @@ interface AdBreakFinder {
     /**
      * Find a ad break to play given the current position, duration of the content
      */
-    fun findPlayableAdBreak(
+    fun findPlayableAdBreaks(
         currentPosition: Float,
         contentStartPosition: Float,
         contentDuration: Float,
         adBreakList: List<AdBreak>
-    ): AdBreak?
+    ): List<AdBreak>?
 
     /**
      * Should the finder scan for ad break

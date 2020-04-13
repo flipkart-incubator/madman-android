@@ -45,7 +45,10 @@ class Tracking {
         CLOSE_LINEAR,
         BREAK_START,
         BREAK_END,
-        ERROR;
+        ERROR,
+
+        CLICK_THROUGH,
+        IMPRESSION;
 
         companion object {
             fun getType(value: String): TrackingEvent? {

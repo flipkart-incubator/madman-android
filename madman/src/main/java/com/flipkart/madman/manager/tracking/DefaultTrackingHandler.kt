@@ -20,19 +20,13 @@ import com.flipkart.madman.logger.LogUtil
 import com.flipkart.madman.network.NetworkLayer
 
 /**
- * Default implemetation of [TrackingHandler]
+ * Default implementation of [TrackingHandler]
  */
 class DefaultTrackingHandler(private val networkLayer: NetworkLayer) : TrackingHandler {
-    override fun trackEvent(url: String?) {
-        url?.let {
-            LogUtil.log("Sending tracking with url : $it")
-            networkLayer.post(url)
-        }
-    }
-
-    override fun trackEvent(event: Tracking.TrackingEvent, urlList: List<String>?) {
-        urlList?.forEach {
-            trackEvent(it)
+    override fun trackEvent(urls: List<String>, event: Tracking.TrackingEvent?) {
+        urls.forEach {
+            LogUtil.log("Sending tracking with url : $it for event: ${event?.name}")
+            networkLayer.post(it)
         }
     }
 }

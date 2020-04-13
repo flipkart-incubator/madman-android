@@ -21,7 +21,5 @@ import com.flipkart.madman.component.model.common.Tracking
  * Tracking handler
  */
 interface TrackingHandler {
-    fun trackEvent(event: Tracking.TrackingEvent, urlList: List<String>?)
-
-    fun trackEvent(url: String?)
+    fun trackEvent(urls: List<String>, event: Tracking.TrackingEvent?)
 }

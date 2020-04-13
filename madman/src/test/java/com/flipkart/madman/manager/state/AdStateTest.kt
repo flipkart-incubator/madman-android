@@ -34,11 +34,11 @@ import org.robolectric.annotation.Config
 import java.io.StringReader
 
 /**
- * Test for [AdPlaybackState]
+ * Test for [AdState]
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [21])
-class AdPlaybackStateTest {
+class AdStateTest {
 
     /**
      * Test the algorithm of fetching the next ad break to play
@@ -57,7 +57,7 @@ class AdPlaybackStateTest {
         val parsedVMAPData = parser.parse(response)
 
         parsedVMAPData?.let {
-            val adPlaybackState = AdPlaybackState()
+            val adPlaybackState = AdState()
             adPlaybackState.withData(parsedVMAPData)
             adPlaybackState.withContentProgress(1F, duration)
 
@@ -72,8 +72,8 @@ class AdPlaybackStateTest {
             assert(playableAdBreak?.timeOffsetInSec == 0F)
 
             /** since the ad break is played, mark it as played **/
-            adPlaybackState.updateStateForAdBreak(AdBreak.AdBreakState.PLAYED)
-            adPlaybackState.markAdBreakAsCompleted()
+            adPlaybackState.onAdBreakStateChange(AdBreak.AdBreakState.PLAYED)
+            adPlaybackState.onAdBreakComplete()
 
             /**
              * now since the pre-roll has already been played, there should be no ad breaks
@@ -94,8 +94,8 @@ class AdPlaybackStateTest {
             assert(playableAdBreak?.timeOffsetInSec == 15F)
 
             /** since the ad break is played, mark it as played **/
-            adPlaybackState.updateStateForAdBreak(AdBreak.AdBreakState.PLAYED)
-            adPlaybackState.markAdBreakAsCompleted()
+            adPlaybackState.onAdBreakStateChange(AdBreak.AdBreakState.PLAYED)
+            adPlaybackState.onAdBreakComplete()
 
             /** now assume the user has scrubbed to 30 seconds **/
             playableAdBreak =
@@ -107,8 +107,8 @@ class AdPlaybackStateTest {
             assert(playableAdBreak == parsedVMAPData.adBreaks?.get(2))
 
             /** since the ad break is played, mark it as played **/
-            adPlaybackState.updateStateForAdBreak(AdBreak.AdBreakState.PLAYED)
-            adPlaybackState.markAdBreakAsCompleted()
+            adPlaybackState.onAdBreakStateChange(AdBreak.AdBreakState.PLAYED)
+            adPlaybackState.onAdBreakComplete()
 
             /** now assume the user has scrubbed back to 10 seconds **/
             playableAdBreak =

@@ -16,6 +16,7 @@
 package com.flipkart.mediaads.demo.madman
 
 import android.os.Bundle
+import android.text.SpannableString
 import androidx.appcompat.app.AppCompatActivity
 import com.flipkart.mediaads.demo.R
 import com.google.android.exoplayer2.ui.PlayerView
@@ -28,12 +29,12 @@ class MadmanPlayerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_player)
 
-        playerView = findViewById(R.id.video_view);
+        playerView = findViewById(R.id.video_view)
         player = MadmanPlayerManager(
             this,
-            intent.extras?.get("url") as? String,
-            intent.extras?.get("response") as? String
-        );
+            intent.extras?.get("url").toString(),
+            intent.extras?.get("response").toString()
+        )
     }
 
     public override fun onResume() {

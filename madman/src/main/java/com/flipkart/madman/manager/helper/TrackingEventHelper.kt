@@ -38,7 +38,7 @@ class TrackingEventHelper(
         when (eventType) {
             Event.AD_STARTED -> {
                 track(Tracking.TrackingEvent.START, trackingMap)
-                track(adTracking?.getAdImpressionUrls())
+                track(Tracking.TrackingEvent.IMPRESSION, adTracking?.getAdImpressionUrls())
             }
             Event.FIRST_QUARTILE -> {
                 track(Tracking.TrackingEvent.FIRST_QUARTILE, trackingMap)
@@ -62,26 +62,18 @@ class TrackingEventHelper(
                 track(Tracking.TrackingEvent.RESUME, trackingMap)
             }
             Event.AD_CTA_CLICKED -> {
-                track(adTracking?.getClickThroughTracking())
+                track(Tracking.TrackingEvent.CLICK_THROUGH, adTracking?.getClickThroughTracking())
             }
             Event.AD_ERROR -> {
-                val adErrorUrls = adTracking?.getAdErrorUrls()
-                errorCode?.let {
-                    /** replace macro with error code **/
-                    trackForError(it, adErrorUrls)
-                } ?: run {
-                    /** error code null, track original url **/
-                    track(adErrorUrls)
+                adTracking?.getAdErrorUrls()?.let {
+                    val replacedUrls = replaceWithErrorCode(it, errorCode)
+                    track(Tracking.TrackingEvent.ERROR, replacedUrls)
                 }
             }
             Event.VAST_ERROR -> {
-                val vastErrorUrls = adTracking?.getVastErrorUrls()
-                errorCode?.let {
-                    /** replace macro with error code **/
-                    trackForError(it, vastErrorUrls)
-                } ?: run {
-                    /** error code null, track original url **/
-                    track(vastErrorUrls)
+                adTracking?.getVastErrorUrls()?.let {
+                    val replacedUrls = replaceWithErrorCode(it, errorCode)
+                    track(Tracking.TrackingEvent.ERROR, replacedUrls)
                 }
             }
             else -> {
@@ -94,24 +86,30 @@ class TrackingEventHelper(
         event: Tracking.TrackingEvent,
         trackingMap: Map<Tracking.TrackingEvent, List<String>>?
     ) {
-        trackingHandler.trackEvent(event, trackingMap?.get(event))
-    }
-
-    private fun track(url: String?) {
-        trackingHandler.trackEvent(url)
-    }
-
-    private fun trackForError(errorCode: Int, urlList: List<String>?) {
-        urlList?.forEach {
-            val replacedError =
-                it.replace(Constant.ERROR_CODE_MACRO, errorCode.toString())
-            track(replacedError)
+        val urls = trackingMap?.get(event)
+        urls?.let {
+            trackingHandler.trackEvent(urls, event)
         }
     }
 
-    private fun track(urlList: List<String>?) {
-        urlList?.forEach {
-            track(it)
+    private fun track(
+        event: Tracking.TrackingEvent,
+        urls: List<String>?
+    ) {
+        urls?.let {
+            trackingHandler.trackEvent(urls, event)
+        }
+    }
+
+    private fun replaceWithErrorCode(urls: List<String>, errorCode: Int?): List<String> {
+        errorCode?.let {
+            val replacedUrls = ArrayList<String>(urls.size)
+            urls.forEach {
+                replacedUrls.add(it.replace(Constant.ERROR_CODE_MACRO, errorCode.toString()))
+            }
+            return replacedUrls
+        } ?: run {
+            return urls
         }
     }
 }

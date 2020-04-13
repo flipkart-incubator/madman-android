@@ -31,7 +31,7 @@ import com.flipkart.madman.manager.handler.ContentProgressHandler
 import com.flipkart.madman.manager.helper.PlayerEventHelper
 import com.flipkart.madman.manager.helper.TrackingEventHelper
 import com.flipkart.madman.manager.model.VastAd
-import com.flipkart.madman.manager.state.AdPlaybackState
+import com.flipkart.madman.manager.state.AdState
 import com.flipkart.madman.manager.tracking.DefaultTrackingHandler
 import com.flipkart.madman.manager.tracking.TrackingHandler
 import com.flipkart.madman.network.NetworkLayer
@@ -76,7 +76,7 @@ abstract class BaseAdManager(
     }
 
     /** represent ad state **/
-    protected var adPlaybackState: AdPlaybackState = AdPlaybackState()
+    protected var adState: AdState = AdState(data.adBreaks ?: emptyList())
 
     /** media progress handler to call the media progress every x seconds **/
     protected val contentProgressHandler: ContentProgressHandler by lazy {
@@ -89,31 +89,17 @@ abstract class BaseAdManager(
     }
 
     /** ad break finder, used to fetch next playable ad break **/
-    protected var adBreakFinder: AdBreakFinder = DefaultAdBreakFinder()
+    protected val adBreakFinder: AdBreakFinder by lazy {
+        createAdBreakFinder()
+    }
 
     /** vast ad provider **/
     protected val vastAdProvider: VastAdProvider by lazy {
         createVastAdProvider()
     }
 
-    /** current ad being played **/
-    protected var currentAd: VastAd? = null
-
     override fun init(contentProgressProvider: ContentProgressProvider) {
         this.contentProgressProvider = contentProgressProvider
-
-        /** initialise the ad playback state with data and break finder **/
-        adPlaybackState = adPlaybackState.withData(data)
-
-        onInit()
-    }
-
-    override fun init(
-        contentProgressProvider: ContentProgressProvider,
-        adBreakFinder: AdBreakFinder
-    ) {
-        this.adBreakFinder = adBreakFinder
-        init(contentProgressProvider)
     }
 
     /**
@@ -145,17 +131,17 @@ abstract class BaseAdManager(
     }
 
     /**
-     * notify all the registered event handlers for the given event
+     * creates a [AdBreakFinder]
      */
-    protected fun notifyAndTrackEvent(event: Event) {
-        playerAdEventHelper.handleEvent(event, currentAd)
-        trackingEventHelper.handleEvent(event, currentAd)
+    protected open fun createAdBreakFinder(): AdBreakFinder {
+        return DefaultAdBreakFinder()
     }
 
     /**
      * notify all the registered event handlers for the given event
      */
-    protected fun notifyAndTrackEvent(event: Event, errorCode: Int) {
+    protected fun notifyAndTrackEvent(event: Event, errorCode: Int? = null) {
+        val currentAd = adState.getVastAd()
         playerAdEventHelper.handleEvent(event, currentAd)
         trackingEventHelper.handleEvent(event, currentAd, errorCode)
     }
@@ -193,9 +179,4 @@ abstract class BaseAdManager(
         adProgressHandler.removeMessages()
         adProgressHandler.removeListeners()
     }
-
-    /**
-     * on init
-     */
-    protected abstract fun onInit()
 }

@@ -38,7 +38,11 @@ object AdDataHelper {
                 when (adBreak.timeOffset) {
                     AdBreak.TimeOffsetTypes.START -> list.add(0F)
                     AdBreak.TimeOffsetTypes.END -> list.add(-1F)
-                    else -> list.add(adBreak.timeOffsetInSec)
+                    else -> {
+                        if (!list.contains(adBreak.timeOffsetInSec)) {
+                            list.add(adBreak.timeOffsetInSec)
+                        }
+                    }
                 }
             }
         }
@@ -73,60 +77,63 @@ object AdDataHelper {
      * creates a [AdElement] for the given [VASTData]
      */
     fun createAdFor(
-        adBreak: AdBreak,
-        vastData: VASTData,
-        podIndex: Int
+        playableAdBreaks: List<AdBreak>?,
+        playableAdBreakIndex: Int
     ): VastAd? {
-        var currentAd: VastAd? = null
-        vastData.ads?.let { ads ->
-            val ad = ads.first()
+        val playableAdBreak = playableAdBreaks?.get(playableAdBreakIndex)
+        playableAdBreak?.let {
+            var currentAd: VastAd? = null
 
-            var totalDuration = 0.0
-            ads.forEach {
-                totalDuration += getAdDuration(it)
-            }
+            it.adSource?.vastAdData?.ads?.let { ads ->
+                val ad = ads.first()
+                var totalDuration = 0.0
+                ads.forEach {
+                    totalDuration += getAdDuration(it)
+                }
 
-            when (val adMedia =
-                getAdMediaFromAd(ad)) {
-                is LinearAdMedia -> {
-                    val adPod = AdPodImpl(
-                        ads.size,
-                        1,
-                        false,
-                        totalDuration,
-                        podIndex,
-                        adBreak.timeOffsetInSec.toDouble()
-                    )
-                    val adElement = AdElementImpl(
-                        ad.id ?: "",
-                        true,
-                        adMedia.skipOffsetInSeconds,
-                        adMedia.skipOffset != null,
-                        adMedia.durationInSeconds,
-                        ad.inLine?.adTitle ?: "",
-                        ad.inLine?.adSystem ?: "",
-                        ad.inLine?.description ?: "",
-                        getClickThroughUrl(adMedia),
-                        adPod
-                    )
-
-                    currentAd = VastAdImpl(
-                        adElement,
-                        getMediaUrlsForAd(
-                            adMedia
-                        ),
-                        VastAdImpl.AdTrackingImpl(
-                            adMedia.eventToTrackingUrlsMap,
-                            ad.inLine?.impressionUrls,
-                            ad.inLine?.errorUrls,
-                            vastData.errorUrls,
-                            getClickThroughTrackingUrlList(adMedia)
+                when (val adMedia =
+                    getAdMediaFromAd(ad)) {
+                    is LinearAdMedia -> {
+                        val adPod = AdPodImpl(
+                            playableAdBreaks.size,
+                            playableAdBreakIndex + 1,
+                            false,
+                            totalDuration,
+                            it.podIndex,
+                            it.timeOffsetInSec.toDouble()
                         )
-                    )
+                        val adElement = AdElementImpl(
+                            ad.id ?: "",
+                            true,
+                            adMedia.skipOffsetInSeconds,
+                            adMedia.skipOffset != null,
+                            adMedia.durationInSeconds,
+                            ad.inLine?.adTitle ?: "",
+                            ad.inLine?.adSystem ?: "",
+                            ad.inLine?.description ?: "",
+                            getClickThroughUrl(adMedia),
+                            adPod
+                        )
+
+                        currentAd = VastAdImpl(
+                            adElement,
+                            getMediaUrlsForAd(
+                                adMedia
+                            ),
+                            VastAdImpl.AdTrackingImpl(
+                                adMedia.eventToTrackingUrlsMap,
+                                ad.inLine?.impressionUrls,
+                                ad.inLine?.errorUrls,
+                                it.adSource?.vastAdData?.errorUrls,
+                                getClickThroughTrackingUrlList(adMedia)
+                            )
+                        )
+                    }
                 }
             }
+            return currentAd
         }
-        return currentAd
+        return null
     }
 
     /**
