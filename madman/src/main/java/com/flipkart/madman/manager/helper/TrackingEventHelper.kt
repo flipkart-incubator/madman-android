@@ -17,6 +17,7 @@ package com.flipkart.madman.manager.helper
 
 import com.flipkart.madman.component.model.common.Tracking
 import com.flipkart.madman.manager.event.Event
+import com.flipkart.madman.manager.model.AdElement
 import com.flipkart.madman.manager.model.VastAd
 import com.flipkart.madman.manager.tracking.TrackingHandler
 
@@ -34,46 +35,55 @@ class TrackingEventHelper(
     fun handleEvent(eventType: Event, ad: VastAd?, errorCode: Int? = null) {
         val adTracking: VastAd.AdTracking? = ad?.getAdTracking()
         val trackingMap: Map<Tracking.TrackingEvent, List<String>>? = adTracking?.getAdTrackingMap()
+        val adElement = ad?.getAdElement()
 
         when (eventType) {
             Event.AD_STARTED -> {
-                track(Tracking.TrackingEvent.START, trackingMap)
-                track(Tracking.TrackingEvent.IMPRESSION, adTracking?.getAdImpressionUrls())
+                track(Tracking.TrackingEvent.START, trackingMap, adElement)
+                track(
+                    Tracking.TrackingEvent.IMPRESSION,
+                    adTracking?.getAdImpressionUrls(),
+                    adElement
+                )
             }
             Event.FIRST_QUARTILE -> {
-                track(Tracking.TrackingEvent.FIRST_QUARTILE, trackingMap)
+                track(Tracking.TrackingEvent.FIRST_QUARTILE, trackingMap, adElement)
             }
             Event.MIDPOINT -> {
-                track(Tracking.TrackingEvent.MIDPOINT, trackingMap)
+                track(Tracking.TrackingEvent.MIDPOINT, trackingMap, adElement)
             }
             Event.THIRD_QUARTILE -> {
-                track(Tracking.TrackingEvent.THIRD_QUARTILE, trackingMap)
+                track(Tracking.TrackingEvent.THIRD_QUARTILE, trackingMap, adElement)
             }
             Event.AD_COMPLETED -> {
-                track(Tracking.TrackingEvent.COMPLETE, trackingMap)
+                track(Tracking.TrackingEvent.COMPLETE, trackingMap, adElement)
             }
             Event.AD_SKIPPED -> {
-                track(Tracking.TrackingEvent.SKIP, trackingMap)
+                track(Tracking.TrackingEvent.SKIP, trackingMap, adElement)
             }
             Event.PAUSE_AD -> {
-                track(Tracking.TrackingEvent.PAUSE, trackingMap)
+                track(Tracking.TrackingEvent.PAUSE, trackingMap, adElement)
             }
             Event.RESUME_AD -> {
-                track(Tracking.TrackingEvent.RESUME, trackingMap)
+                track(Tracking.TrackingEvent.RESUME, trackingMap, adElement)
             }
             Event.AD_CTA_CLICKED -> {
-                track(Tracking.TrackingEvent.CLICK_THROUGH, adTracking?.getClickThroughTracking())
+                track(
+                    Tracking.TrackingEvent.CLICK_THROUGH,
+                    adTracking?.getClickThroughTracking(),
+                    adElement
+                )
             }
             Event.AD_ERROR -> {
                 adTracking?.getAdErrorUrls()?.let {
                     val replacedUrls = replaceWithErrorCode(it, errorCode)
-                    track(Tracking.TrackingEvent.ERROR, replacedUrls)
+                    track(Tracking.TrackingEvent.ERROR, replacedUrls, adElement)
                 }
             }
             Event.VAST_ERROR -> {
                 adTracking?.getVastErrorUrls()?.let {
                     val replacedUrls = replaceWithErrorCode(it, errorCode)
-                    track(Tracking.TrackingEvent.ERROR, replacedUrls)
+                    track(Tracking.TrackingEvent.ERROR, replacedUrls, adElement)
                 }
             }
             else -> {
@@ -84,20 +94,22 @@ class TrackingEventHelper(
 
     private fun track(
         event: Tracking.TrackingEvent,
-        trackingMap: Map<Tracking.TrackingEvent, List<String>>?
+        trackingMap: Map<Tracking.TrackingEvent, List<String>>?,
+        ad: AdElement?
     ) {
         val urls = trackingMap?.get(event)
         urls?.let {
-            trackingHandler.trackEvent(urls, event)
+            trackingHandler.trackEvent(urls, event, ad)
         }
     }
 
     private fun track(
         event: Tracking.TrackingEvent,
-        urls: List<String>?
+        urls: List<String>?,
+        ad: AdElement?
     ) {
         urls?.let {
-            trackingHandler.trackEvent(urls, event)
+            trackingHandler.trackEvent(urls, event, ad)
         }
     }
 

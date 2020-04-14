@@ -17,15 +17,16 @@ package com.flipkart.madman.manager.tracking
 
 import com.flipkart.madman.component.model.common.Tracking
 import com.flipkart.madman.logger.LogUtil
+import com.flipkart.madman.manager.model.AdElement
 import com.flipkart.madman.network.NetworkLayer
 
 /**
  * Default implementation of [TrackingHandler]
  */
 class DefaultTrackingHandler(private val networkLayer: NetworkLayer) : TrackingHandler {
-    override fun trackEvent(urls: List<String>, event: Tracking.TrackingEvent?) {
+    override fun trackEvent(urls: List<String>, event: Tracking.TrackingEvent?, forAd: AdElement?) {
         urls.forEach {
-            LogUtil.log("Sending tracking with url : $it for event: ${event?.name}")
+            LogUtil.log("Sending tracking, Ad: ${forAd?.getId()}, event: ${event?.name}, url : $it")
             networkLayer.post(it)
         }
     }
