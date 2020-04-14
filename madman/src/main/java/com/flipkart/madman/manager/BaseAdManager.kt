@@ -31,7 +31,7 @@ import com.flipkart.madman.manager.handler.ContentProgressHandler
 import com.flipkart.madman.manager.helper.PlayerEventHelper
 import com.flipkart.madman.manager.helper.TrackingEventHelper
 import com.flipkart.madman.manager.model.VastAd
-import com.flipkart.madman.manager.state.AdState
+import com.flipkart.madman.manager.state.AdPlaybackState
 import com.flipkart.madman.manager.tracking.DefaultTrackingHandler
 import com.flipkart.madman.manager.tracking.TrackingHandler
 import com.flipkart.madman.network.NetworkLayer
@@ -64,19 +64,19 @@ abstract class BaseAdManager(
     }
 
     /** player event handler helper class **/
-    private val playerAdEventHelper: PlayerEventHelper by lazy {
+    protected val playerAdEventHelper: PlayerEventHelper by lazy {
         val handler = PlayerEventHelper(player)
         handler.setEventListener(adEventListener)
         handler
     }
 
     /** tracking handler helper class **/
-    private val trackingEventHelper: TrackingEventHelper by lazy {
+    protected val trackingEventHelper: TrackingEventHelper by lazy {
         TrackingEventHelper(DefaultTrackingHandler(networkLayer))
     }
 
     /** represent ad state **/
-    protected var adState: AdState = AdState(data.adBreaks ?: emptyList())
+    protected var adPlaybackState: AdPlaybackState = AdPlaybackState(data.adBreaks ?: emptyList())
 
     /** media progress handler to call the media progress every x seconds **/
     protected val contentProgressHandler: ContentProgressHandler by lazy {
@@ -135,15 +135,6 @@ abstract class BaseAdManager(
      */
     protected open fun createAdBreakFinder(): AdBreakFinder {
         return DefaultAdBreakFinder()
-    }
-
-    /**
-     * notify all the registered event handlers for the given event
-     */
-    protected fun notifyAndTrackEvent(event: Event, errorCode: Int? = null) {
-        val currentAd = adState.getVastAd()
-        playerAdEventHelper.handleEvent(event, currentAd)
-        trackingEventHelper.handleEvent(event, currentAd, errorCode)
     }
 
     /**

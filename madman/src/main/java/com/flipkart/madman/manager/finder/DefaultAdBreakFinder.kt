@@ -74,13 +74,13 @@ class DefaultAdBreakFinder : AdBreakFinder {
         contentStartPosition: Float,
         contentDuration: Float,
         adBreakList: List<AdBreak>
-    ): List<AdBreak>? {
+    ): List<AdBreak> {
         val adBreaks = mutableListOf<AdBreak>()
 
         /**
          * If position has changed, do a linear search to find out previous and next cue point index, and update accordingly
          */
-        if (scanForAdBreak(currentPosition, adBreakList)) {
+        if (scanForAdBreak(currentPosition)) {
             previousCuePointIndex = getAdBreakIndexForPosition(currentPosition, adBreakList)
             nextCuePointIndex =
                 if (previousCuePointIndex < adBreakList.size - 1) previousCuePointIndex + 1 else Constant.INDEX_UNSET
@@ -130,8 +130,7 @@ class DefaultAdBreakFinder : AdBreakFinder {
     }
 
     override fun scanForAdBreak(
-        currentPosition: Float,
-        adBreakList: List<AdBreak>
+        currentPosition: Float
     ): Boolean {
         return hasPositionChanged(
             previousCuePoint,

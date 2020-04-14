@@ -34,6 +34,8 @@ import com.flipkart.madman.manager.handler.ContentProgressHandler
 import com.flipkart.madman.manager.helper.Constant.FIRST_QUARTILE
 import com.flipkart.madman.manager.helper.Constant.MIDPOINT
 import com.flipkart.madman.manager.helper.Constant.THIRD_QUARTILE
+import com.flipkart.madman.manager.model.VastAd
+import com.flipkart.madman.manager.state.AdPlaybackState
 import com.flipkart.madman.network.NetworkLayer
 import com.flipkart.madman.network.model.NetworkAdRequest
 import com.flipkart.madman.provider.ContentProgressProvider
@@ -55,7 +57,6 @@ open class DefaultAdManager(
 ) : BaseAdManager(data, adRenderer, adLoader, networkLayer, adEventListener),
     AdProgressHandler.AdProgressUpdateListener, ViewClickListener {
 
-    var adfetching = false
     /** ad rendering settings **/
     private val adRenderingSettings: RenderingSettings by lazy {
         adRenderer.getRenderingSettings()
@@ -66,8 +67,10 @@ open class DefaultAdManager(
         AdDataHelper.getCuePoints(data)
     }
 
-    /** last ad progress percentage **/
-    private var lastAdProgressPercentage: Float = 0F
+    /** previous ad progress **/
+    private var previousAdProgress: Progress = Progress.UNDEFINED
+
+    private var currentAd: VastAd? = null
 
     override fun getCuePoints(): List<Float> {
         return adCuePoints
@@ -76,14 +79,7 @@ open class DefaultAdManager(
     override fun init(contentProgressProvider: ContentProgressProvider) {
         super.init(contentProgressProvider)
         adRenderer.registerViewClickListener(this)
-        onInit()
-    }
 
-    /**
-     * Gets called when the media is ready
-     * ie the media progress is not [Progress.UNDEFINED]
-     */
-    fun onInit() {
         if (AdDataHelper.hasPreRollAds(data)) {
             LogUtil.log("pre-roll ads present")
         } else {
@@ -122,12 +118,13 @@ open class DefaultAdManager(
         /**
          * Update the playback state with the content duration if not set
          */
-        adState = adState.withContentProgress(currentTime, duration)
+        adPlaybackState = adPlaybackState.withContentProgress(currentTime, duration)
 
         /**
          * Get the playable ad break from ad playback state depending on the current time of the media
          */
-        adState.findPlayableAdBreaks(currentTime, duration, adBreakFinder)?.let {
+        adPlaybackState.findPlayableAdGroup(currentTime, duration, adBreakFinder)
+        adPlaybackState.getAdGroup()?.getAdBreak()?.let {
             when (it.state) {
                 /**
                  * If the ad break has been loaded which means we have the vast for the given ad
@@ -147,6 +144,7 @@ open class DefaultAdManager(
                     if (canPreloadAdBreak(it, currentTime)) {
                         fetchAdBreak(it) {
                             loadAd()
+                            notifyAndTrackEvent(Event.LOAD_AD)
                         }
                     }
                 }
@@ -170,79 +168,79 @@ open class DefaultAdManager(
     override fun onAdProgressUpdate(progress: Progress) {
         LogUtil.log("onAdProgressUpdate: progress: ${progress.currentTime}, duration: ${progress.duration}")
 
-        if (progress == Progress.UNDEFINED) {
-            if (adState.isAdPlaying) {
-                adState.isAdPlaying = false
-                adState.onAdComplete()
-                stopAd()
-                resumeContent()
-                removeAdMessageHandler()
-                startContentHandler()
-            } else {
-                adProgressHandler.sendMessageAfter(AD_PROGRESS_HANDLER_DELAY)
-            }
-            return
-        }
-
         val percentage = progress.currentTime / progress.duration
+        val previousPercentage = previousAdProgress.currentTime / previousAdProgress.duration
+
         when {
             /**
-             * if the previous percentage is less than 0.25F and current percentage is greater than 0.25F,
-             * fire the first quartile event
+             * if previous percentage is less than 0.25F and current percentage is greater than 0.25F, fire the FIRST_QUARTILE event
              */
-            lastAdProgressPercentage > 0 && lastAdProgressPercentage < FIRST_QUARTILE && percentage > FIRST_QUARTILE -> {
+            previousPercentage < FIRST_QUARTILE && percentage > FIRST_QUARTILE -> {
                 notifyAndTrackEvent(Event.FIRST_QUARTILE)
             }
             /**
-             * if the previous percentage is less than 0.50F and current percentage is greater than 0.50F,
-             * fire the midpoint event
+             * if previous percentage is less than 0.50F and current percentage is greater than 0.50F, fire the MIDPOINT event
              */
-            lastAdProgressPercentage > 0 && lastAdProgressPercentage < MIDPOINT && percentage > MIDPOINT -> {
+            previousPercentage < MIDPOINT && percentage > MIDPOINT -> {
                 notifyAndTrackEvent(Event.MIDPOINT)
             }
             /**
-             * if the previous percentage is less than 0.75F and current percentage is greater than 0.75F,
-             * fire the third quartile event
+             * if previous percentage is less than 0.75F and current percentage is greater than 0.75F, fire the THIRD_QUARTILE event
              */
-            lastAdProgressPercentage > 0 && lastAdProgressPercentage < THIRD_QUARTILE && percentage > THIRD_QUARTILE -> {
+            previousPercentage < THIRD_QUARTILE && percentage > THIRD_QUARTILE -> {
                 notifyAndTrackEvent(Event.THIRD_QUARTILE)
             }
             /**
-             * if the previous percentage is less than 0F and current percentage is greater than 0F,
-             * fire the started event
+             * if previous percentage is less than current percentage, and progress is not [Progress.UNDEFINED], fire AD_PROGRESS event
              */
-            lastAdProgressPercentage == 0F && percentage > 0F -> {
-                notifyAndTrackEvent(Event.AD_STARTED)
-                adState.getVastAd()?.let {
-                    adRenderer.renderView(it.getAdElement())
-                }
-                adfetching = false
+            previousPercentage <= percentage && progress != Progress.UNDEFINED -> {
+                notifyAndTrackEvent(Event.AD_PROGRESS)
             }
             /**
-             * for all other cases, fire the progress event
+             * if the ad state is [AdPlaybackState.AdState.STARTED], fire the AD_STARTED event
              */
-            lastAdProgressPercentage > 0 && lastAdProgressPercentage <= percentage -> {
-                notifyAndTrackEvent(Event.AD_PROGRESS)
-                adState.isAdPlaying = true
+            adPlaybackState.isAdStarted() -> {
+                notifyAndTrackEvent(Event.AD_STARTED)
+                adPlaybackState.updateAdState(AdPlaybackState.AdState.PLAYING)
+                currentAd?.let {
+                    adRenderer.renderView(it.getAdElement())
+                }
+                if (adPlaybackState.getAdGroup()?.hasNextAdBreakInAdGroup() == true) {
+                    notifyAndTrackEvent(Event.LOAD_AD)
+                }
+            }
+            /**
+             * if the ad state is [AdPlaybackState.AdState.ENDED], stop the ad and load the next ad break in same ad group if present
+             */
+            adPlaybackState.isAdEnded() -> {
+                updateAdState(AdPlaybackState.AdState.INIT)
+                previousAdProgress = Progress.UNDEFINED
 
-                if (percentage > 0.98f && !adfetching) {
-                    adfetching = true
-                    if (adState.hasMoreAdBreakForSameCuePoint()) {
-                        adState.onAdComplete()
-                        adState.currentAdBreak?.let {
-                            fetchAdBreak(it) {
-                                stopAd()
-                                loadAd()
-                                playAd()
-                            }
+                adPlaybackState.getAdGroup()?.let {
+                    updateAdBreakState(AdBreak.AdBreakState.PLAYED)
+                    it.onAdBreakComplete()
+                    notifyAndTrackEvent(Event.AD_STOPPED)
+                    notifyAndTrackEvent(Event.AD_COMPLETED)
+                    removeAdMessageHandler()
+
+                    if (it.hasMoreAdBreaksInAdGroup()) {
+                        /** play the next ad break for same cue point **/
+                        fetchAdBreak(it.getAdBreak()) {
+                            loadAd()
+                            playAd()
                         }
+                    } else {
+                        /** no ad break for this ad group, resume content **/
+                        resumeContent()
+                        startContentHandler()
+                        return
                     }
                 }
             }
         }
 
         /** store the percentage **/
-        lastAdProgressPercentage = percentage
+        previousAdProgress = progress
 
         /** send message after "x" ms **/
         adProgressHandler.sendMessageAfter(AD_PROGRESS_HANDLER_DELAY)
@@ -254,6 +252,7 @@ open class DefaultAdManager(
      * sdk to start the ad playback.
      */
     override fun onAdPlayCallback() {
+        updateAdState(AdPlaybackState.AdState.STARTED)
         removeContentHandler()
         adRenderer.createView()
     }
@@ -263,9 +262,8 @@ open class DefaultAdManager(
      * Remove the ad message handlers and update the state
      */
     override fun onAdEndedCallback() {
-        lastAdProgressPercentage = 0F
+        updateAdState(AdPlaybackState.AdState.ENDED)
         adRenderer.removeView()
-        updateAdBreakState(AdBreak.AdBreakState.PLAYED)
     }
 
     /**
@@ -316,10 +314,8 @@ open class DefaultAdManager(
      * Called when the content is completed
      */
     override fun contentComplete() {
-        adState.markContentCompleted()
-        if (adState.isPostRollPlayed()) {
-            onContentCompleted()
-        }
+        adPlaybackState.contentCompleted()
+        onContentCompleted()
     }
 
     override fun destroy() {
@@ -333,13 +329,12 @@ open class DefaultAdManager(
      * fire all ads completed event and remove all the handlers.
      */
     private fun onContentCompleted() {
-        if (adState.contentCompleted || adState.isPostRollPlayed()) {
+        if (adPlaybackState.hasContentCompleted() || adPlaybackState.isPostRollPlayed()) {
             notifyAndTrackEvent(Event.ALL_AD_COMPLETED)
         }
     }
 
     private fun fetchAdBreak(adBreak: AdBreak, onSuccess: () -> (Unit)) {
-        updateAdBreakState(AdBreak.AdBreakState.LOADING)
         vastAdProvider.getVASTAd(adBreak, object : VastAdProvider.Listener {
             /**
              * Called on successful fetch of [VASTData]
@@ -347,9 +342,9 @@ open class DefaultAdManager(
              */
             override fun onVastFetchSuccess(vastData: VASTData) {
                 updateAdBreakState(AdBreak.AdBreakState.LOADED)
-                adState.updateVastDataForCurrentAdBreak(vastData)
+                currentAd = adPlaybackState.getAdGroup()?.getVastAd(vastData)
 
-                if (adState.getVastAd()?.getAdMediaUrls()?.isNotEmpty() == true) {
+                if (currentAd?.getAdMediaUrls()?.isNotEmpty() == true) {
                     onSuccess()
                 } else {
                     notifyAndTrackEvent(
@@ -378,7 +373,7 @@ open class DefaultAdManager(
     }
 
     private fun loadAd() {
-        notifyAndTrackEvent(Event.LOAD_AD)
+        notifyAndTrackEvent(Event.AD_LOADED)
     }
 
     private fun playAd() {
@@ -393,13 +388,12 @@ open class DefaultAdManager(
         notifyAndTrackEvent(Event.CONTENT_RESUME)
     }
 
-    private fun stopAd() {
-        notifyAndTrackEvent(Event.AD_STOPPED)
-        notifyAndTrackEvent(Event.AD_COMPLETED)
+    private fun updateAdBreakState(state: AdBreak.AdBreakState) {
+        adPlaybackState.getAdGroup()?.updateAdBreakState(state)
     }
 
-    private fun updateAdBreakState(state: AdBreak.AdBreakState) {
-        adState.onAdBreakStateChange(state)
+    private fun updateAdState(state: AdPlaybackState.AdState) {
+        adPlaybackState.updateAdState(state)
     }
 
     /**
@@ -420,9 +414,9 @@ open class DefaultAdManager(
      * pause the ad if playing
      */
     private fun pauseAdIfPlaying() {
-        if (adState.isAdPlaying) {
+        if (adPlaybackState.isAdPlaying()) {
             notifyAndTrackEvent(Event.PAUSE_AD)
-            adState.isAdPaused = true
+            updateAdState(AdPlaybackState.AdState.PAUSED)
         }
     }
 
@@ -430,10 +424,18 @@ open class DefaultAdManager(
      * resumed the ad if paused
      */
     private fun resumeAdIfPaused() {
-        if (adState.isAdPaused) {
+        if (adPlaybackState.isAdPaused()) {
             notifyAndTrackEvent(Event.RESUME_AD)
-            adState.isAdPaused = false
+            updateAdState(AdPlaybackState.AdState.PLAYING)
         }
+    }
+
+    /**
+     * notify all the registered event handlers for the given event
+     */
+    protected fun notifyAndTrackEvent(event: Event, errorCode: Int? = null) {
+        playerAdEventHelper.handleEvent(event, currentAd)
+        trackingEventHelper.handleEvent(event, currentAd, errorCode)
     }
 
     companion object {

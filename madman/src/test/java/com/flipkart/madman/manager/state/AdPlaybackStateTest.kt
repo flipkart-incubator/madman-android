@@ -34,11 +34,11 @@ import org.robolectric.annotation.Config
 import java.io.StringReader
 
 /**
- * Test for [AdState]
+ * Test for [AdPlaybackState]
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [21])
-class AdStateTest {
+class AdPlaybackStateTest {
 
     /**
      * Test the algorithm of fetching the next ad break to play
@@ -57,7 +57,7 @@ class AdStateTest {
         val parsedVMAPData = parser.parse(response)
 
         parsedVMAPData?.let {
-            val adPlaybackState = AdState()
+            val adPlaybackState = AdPlaybackState()
             adPlaybackState.withData(parsedVMAPData)
             adPlaybackState.withContentProgress(1F, duration)
 

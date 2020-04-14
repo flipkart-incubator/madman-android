@@ -16,6 +16,7 @@
 package com.flipkart.madman.manager.finder
 
 import com.flipkart.madman.component.model.vmap.AdBreak
+import java.util.*
 
 /**
  * Finds the playable ad break using the current position of the the media
@@ -29,10 +30,10 @@ interface AdBreakFinder {
         contentStartPosition: Float,
         contentDuration: Float,
         adBreakList: List<AdBreak>
-    ): List<AdBreak>?
+    ): List<AdBreak>
 
     /**
      * Should the finder scan for ad break
      */
-    fun scanForAdBreak(currentPosition: Float, adBreakList: List<AdBreak>): Boolean
+    fun scanForAdBreak(currentPosition: Float): Boolean
 }

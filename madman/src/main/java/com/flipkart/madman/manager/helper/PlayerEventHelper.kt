@@ -47,7 +47,6 @@ class PlayerEventHelper(private val player: AdPlayer) {
             }
             Event.LOAD_AD -> {
                 ad?.let {
-                    fireEventToListeners(AdEventType.LOADED, adElement)
                     player.loadAd(ad.getAdMediaUrls())
                 }
             }
@@ -70,6 +69,9 @@ class PlayerEventHelper(private val player: AdPlayer) {
             }
             Event.THIRD_QUARTILE -> {
                 fireEventToListeners(AdEventType.THIRD_QUARTILE, adElement)
+            }
+            Event.AD_LOADED -> {
+                fireEventToListeners(AdEventType.LOADED, adElement)
             }
             Event.AD_PROGRESS -> {
                 fireEventToListeners(AdEventType.PROGRESS, adElement)

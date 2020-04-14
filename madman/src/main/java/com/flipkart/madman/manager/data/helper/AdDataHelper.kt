@@ -32,18 +32,19 @@ object AdDataHelper {
      * get all the cue points for ads
      */
     fun getCuePoints(data: VMAPData): List<Float> {
+        return getCuePoints(data.adBreaks)
+    }
+
+    fun getCuePoints(adBreaks: List<AdBreak>?): List<Float> {
         val list = mutableListOf<Float>()
-        data.adBreaks?.let {
-            it.iterator().forEach { adBreak ->
-                when (adBreak.timeOffset) {
-                    AdBreak.TimeOffsetTypes.START -> list.add(0F)
-                    AdBreak.TimeOffsetTypes.END -> list.add(-1F)
-                    else -> {
-                        if (!list.contains(adBreak.timeOffsetInSec)) {
-                            list.add(adBreak.timeOffsetInSec)
-                        }
-                    }
-                }
+        adBreaks?.forEach {
+            val timeOffset = when (it.timeOffset) {
+                AdBreak.TimeOffsetTypes.START -> 0F
+                AdBreak.TimeOffsetTypes.END -> -1F
+                else -> it.timeOffsetInSec
+            }
+            if (!list.contains(timeOffset)) {
+                list.add(timeOffset)
             }
         }
         return list
@@ -77,10 +78,10 @@ object AdDataHelper {
      * creates a [AdElement] for the given [VASTData]
      */
     fun createAdFor(
-        playableAdBreaks: List<AdBreak>?,
-        playableAdBreakIndex: Int
+        playableAdBreak: AdBreak?,
+        playableAdBreakIndex: Int,
+        totalAdBreaks: Int
     ): VastAd? {
-        val playableAdBreak = playableAdBreaks?.get(playableAdBreakIndex)
         playableAdBreak?.let {
             var currentAd: VastAd? = null
 
@@ -95,7 +96,7 @@ object AdDataHelper {
                     getAdMediaFromAd(ad)) {
                     is LinearAdMedia -> {
                         val adPod = AdPodImpl(
-                            playableAdBreaks.size,
+                            totalAdBreaks,
                             playableAdBreakIndex + 1,
                             false,
                             totalDuration,

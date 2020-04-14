@@ -28,6 +28,7 @@ enum class Event {
     FIRST_QUARTILE,
     MIDPOINT,
     THIRD_QUARTILE,
+    AD_LOADED,
     AD_STARTED,
     AD_PROGRESS,
     AD_COMPLETED,
