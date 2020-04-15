@@ -84,12 +84,18 @@ class ProgressHandler(
     inner class ProgressCallback : Handler.Callback {
         override fun handleMessage(msg: Message): Boolean {
             when (msg.what) {
+                /**
+                 * fetch the content progress from [ContentProgressProvider]
+                 */
                 MessageCode.CONTENT_MESSAGE.value -> {
                     val progress = contentProgressProvider.getContentProgress()
                     contentProgressListeners?.forEach {
                         it.onContentProgressUpdate(progress)
                     }
                 }
+                /**
+                 * fetch the ad progress from [AdProgressProvider]
+                 */
                 MessageCode.AD_MESSAGE.value -> {
                     val progress = adProgressProvider.getAdProgress()
                     adProgressListeners?.forEach {
