@@ -29,8 +29,7 @@ import com.flipkart.madman.logger.LogUtil
 import com.flipkart.madman.manager.data.VastAdProvider
 import com.flipkart.madman.manager.data.helper.AdDataHelper
 import com.flipkart.madman.manager.event.Event
-import com.flipkart.madman.manager.handler.AdProgressHandler
-import com.flipkart.madman.manager.handler.ContentProgressHandler
+import com.flipkart.madman.manager.handler.ProgressHandler
 import com.flipkart.madman.manager.helper.Constant.FIRST_QUARTILE
 import com.flipkart.madman.manager.helper.Constant.MIDPOINT
 import com.flipkart.madman.manager.helper.Constant.THIRD_QUARTILE
@@ -54,8 +53,7 @@ open class DefaultAdManager(
     private val adRenderer: AdRenderer,
     adEventListener: AdEventListener,
     private val adErrorListener: AdErrorListener
-) : BaseAdManager(data, adRenderer, adLoader, networkLayer, adEventListener),
-    AdProgressHandler.AdProgressUpdateListener, ViewClickListener {
+) : BaseAdManager(data, adRenderer, adLoader, networkLayer, adEventListener), ViewClickListener {
 
     /** ad rendering settings **/
     private val adRenderingSettings: RenderingSettings by lazy {
@@ -157,7 +155,10 @@ open class DefaultAdManager(
         }
 
         /** send message after 1 second **/
-        contentProgressHandler.sendMessageDelayed(MEDIA_PROGRESS_HANDLER_DELAY)
+        progressHandler.sendDelayedMessageFor(
+            MEDIA_PROGRESS_HANDLER_DELAY,
+            ProgressHandler.MessageCode.CONTENT_MESSAGE
+        )
     }
 
     /**
@@ -221,6 +222,7 @@ open class DefaultAdManager(
                     it.onAdBreakComplete()
                     notifyAndTrackEvent(Event.AD_STOPPED)
                     notifyAndTrackEvent(Event.AD_COMPLETED)
+                    removeAdMessageHandler()
 
                     if (it.hasMoreAdBreaksInAdGroup()) {
                         /** play the next ad break for same cue point **/
@@ -243,7 +245,10 @@ open class DefaultAdManager(
         previousAdProgress = progress
 
         /** send message after "x" ms **/
-        adProgressHandler.sendMessageAfter(AD_PROGRESS_HANDLER_DELAY)
+        progressHandler.sendDelayedMessageFor(
+            AD_PROGRESS_HANDLER_DELAY,
+            ProgressHandler.MessageCode.AD_MESSAGE
+        )
     }
 
     /**
@@ -263,7 +268,6 @@ open class DefaultAdManager(
      */
     override fun onAdEndedCallback() {
         updateAdState(AdPlaybackState.AdState.ENDED)
-        removeAdMessageHandler()
         adRenderer.removeView()
     }
 
@@ -416,6 +420,7 @@ open class DefaultAdManager(
      */
     private fun pauseAdIfPlaying() {
         if (adPlaybackState.isAdPlaying()) {
+            removeAdMessageHandler()
             notifyAndTrackEvent(Event.PAUSE_AD)
             updateAdState(AdPlaybackState.AdState.PAUSED)
         }
@@ -426,6 +431,7 @@ open class DefaultAdManager(
      */
     private fun resumeAdIfPaused() {
         if (adPlaybackState.isAdPaused()) {
+            startAdMessageHandler()
             notifyAndTrackEvent(Event.RESUME_AD)
             updateAdState(AdPlaybackState.AdState.PLAYING)
         }

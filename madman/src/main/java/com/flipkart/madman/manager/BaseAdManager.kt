@@ -23,14 +23,13 @@ import com.flipkart.madman.manager.data.VastAdProvider
 import com.flipkart.madman.manager.data.providers.NetworkVastAdProvider
 import com.flipkart.madman.manager.data.providers.StringVastAdProvider
 import com.flipkart.madman.manager.data.providers.VastAdProviderImpl
-import com.flipkart.madman.manager.event.Event
 import com.flipkart.madman.manager.finder.AdBreakFinder
 import com.flipkart.madman.manager.finder.DefaultAdBreakFinder
-import com.flipkart.madman.manager.handler.AdProgressHandler
-import com.flipkart.madman.manager.handler.ContentProgressHandler
+import com.flipkart.madman.manager.handler.AdProgressUpdateListener
+import com.flipkart.madman.manager.handler.ContentProgressUpdateListener
+import com.flipkart.madman.manager.handler.ProgressHandler
 import com.flipkart.madman.manager.helper.PlayerEventHelper
 import com.flipkart.madman.manager.helper.TrackingEventHelper
-import com.flipkart.madman.manager.model.VastAd
 import com.flipkart.madman.manager.state.AdPlaybackState
 import com.flipkart.madman.manager.tracking.DefaultTrackingHandler
 import com.flipkart.madman.manager.tracking.TrackingHandler
@@ -52,9 +51,9 @@ abstract class BaseAdManager(
     networkLayer: NetworkLayer,
     adEventListener: AdEventListener
 ) : AdManager, AdPlayerCallback(),
-    ContentProgressHandler.ContentProgressUpdateListener,
-    AdProgressHandler.AdProgressUpdateListener {
-    private var contentProgressProvider: ContentProgressProvider? = null
+    ContentProgressUpdateListener,
+    AdProgressUpdateListener {
+    private lateinit var contentProgressProvider: ContentProgressProvider
 
     /** ad player interface **/
     private val player: AdPlayer by lazy {
@@ -78,14 +77,9 @@ abstract class BaseAdManager(
     /** represent ad state **/
     protected var adPlaybackState: AdPlaybackState = AdPlaybackState(data.adBreaks ?: emptyList())
 
-    /** media progress handler to call the media progress every x seconds **/
-    protected val contentProgressHandler: ContentProgressHandler by lazy {
-        ContentProgressHandler(contentProgressProvider)
-    }
-
-    /** ad progress handler to call the ad progress every x seconds **/
-    protected val adProgressHandler: AdProgressHandler by lazy {
-        AdProgressHandler(player)
+    /** progress handler to fetch content/ad progress **/
+    protected val progressHandler: ProgressHandler by lazy {
+        ProgressHandler(contentProgressProvider, player, null)
     }
 
     /** ad break finder, used to fetch next playable ad break **/
@@ -116,8 +110,7 @@ abstract class BaseAdManager(
     override fun destroy() {
         player.unregisterAdPlayerCallback(this)
         playerAdEventHelper.destroy()
-        removeAdMessageHandler()
-        removeContentHandler()
+        progressHandler.destroy()
     }
 
     /**
@@ -142,16 +135,16 @@ abstract class BaseAdManager(
      */
     protected fun startContentHandler() {
         removeContentHandler()
-        contentProgressHandler.setListener(this)
-        contentProgressHandler.sendMessage()
+        progressHandler.setContentProgressListener(this)
+        progressHandler.sendMessageFor(ProgressHandler.MessageCode.CONTENT_MESSAGE)
     }
 
     /**
      * remove the media handler
      */
     protected fun removeContentHandler() {
-        contentProgressHandler.removeMessages()
-        contentProgressHandler.removeListeners()
+        progressHandler.removeMessagesFor(ProgressHandler.MessageCode.CONTENT_MESSAGE)
+        progressHandler.removeContentProgressListeners()
     }
 
     /**
@@ -159,15 +152,15 @@ abstract class BaseAdManager(
      */
     protected fun startAdMessageHandler() {
         removeAdMessageHandler()
-        adProgressHandler.setListener(this)
-        adProgressHandler.sendMessage()
+        progressHandler.setAdProgressListener(this)
+        progressHandler.sendMessageFor(ProgressHandler.MessageCode.AD_MESSAGE)
     }
 
     /**
      * remove ad progress handlers
      */
     protected fun removeAdMessageHandler() {
-        adProgressHandler.removeMessages()
-        adProgressHandler.removeListeners()
+        progressHandler.removeMessagesFor(ProgressHandler.MessageCode.AD_MESSAGE)
+        progressHandler.removeAdProgressListeners()
     }
 }
