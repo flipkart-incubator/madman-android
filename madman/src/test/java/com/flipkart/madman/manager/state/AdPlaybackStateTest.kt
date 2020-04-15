@@ -57,13 +57,12 @@ class AdPlaybackStateTest {
         val parsedVMAPData = parser.parse(response)
 
         parsedVMAPData?.let {
-            val adPlaybackState = AdPlaybackState()
-            adPlaybackState.withData(parsedVMAPData)
+            val adPlaybackState = AdPlaybackState(parsedVMAPData.adBreaks ?: emptyList())
             adPlaybackState.withContentProgress(1F, duration)
 
+            adPlaybackState.findPlayableAdGroup(0F, duration, defaultAdBreakFinder)
             /** get ad break to be played at 0 progress of media **/
-            var playableAdBreak =
-                adPlaybackState.getPlayableAdBreak(0F, duration, defaultAdBreakFinder)
+            var playableAdBreak = adPlaybackState.getAdGroup()?.getAdBreak()
 
             /**
              * since the vmap consists of a pre-roll, the playable ad break should be the pre-roll
@@ -72,20 +71,22 @@ class AdPlaybackStateTest {
             assert(playableAdBreak?.timeOffsetInSec == 0F)
 
             /** since the ad break is played, mark it as played **/
-            adPlaybackState.onAdBreakStateChange(AdBreak.AdBreakState.PLAYED)
-            adPlaybackState.onAdBreakComplete()
+            adPlaybackState.getAdGroup()?.updateAdBreakState(AdBreak.AdBreakState.PLAYED)
+            adPlaybackState.getAdGroup()?.onAdBreakComplete()
 
             /**
              * now since the pre-roll has already been played, there should be no ad breaks
              * to be played when the current position of the media is 0
              */
-            playableAdBreak = adPlaybackState.getPlayableAdBreak(0F, duration, defaultAdBreakFinder)
+            adPlaybackState.onAdGroupComplete()
+            adPlaybackState.findPlayableAdGroup(0F, duration, defaultAdBreakFinder)
+            playableAdBreak = adPlaybackState.getAdGroup()?.getAdBreak()
             assert(playableAdBreak == null)
 
             /** now assume the user has scrubbed to 20 seconds **/
-            playableAdBreak =
-                adPlaybackState.getPlayableAdBreak(20F, duration, defaultAdBreakFinder)
-
+            adPlaybackState.onAdGroupComplete()
+            adPlaybackState.findPlayableAdGroup(20F, duration, defaultAdBreakFinder)
+            playableAdBreak = adPlaybackState.getAdGroup()?.getAdBreak()
             /**
              * since there is an ad break at 15 seconds which is not played yet
              * it should return the 2nd ad break
@@ -94,12 +95,14 @@ class AdPlaybackStateTest {
             assert(playableAdBreak?.timeOffsetInSec == 15F)
 
             /** since the ad break is played, mark it as played **/
-            adPlaybackState.onAdBreakStateChange(AdBreak.AdBreakState.PLAYED)
-            adPlaybackState.onAdBreakComplete()
+            adPlaybackState.getAdGroup()?.updateAdBreakState(AdBreak.AdBreakState.PLAYED)
+            adPlaybackState.getAdGroup()?.onAdBreakComplete()
+
 
             /** now assume the user has scrubbed to 30 seconds **/
-            playableAdBreak =
-                adPlaybackState.getPlayableAdBreak(30F, duration, defaultAdBreakFinder)
+            adPlaybackState.onAdGroupComplete()
+            adPlaybackState.findPlayableAdGroup(30F, duration, defaultAdBreakFinder)
+            playableAdBreak = adPlaybackState.getAdGroup()?.getAdBreak()
 
             /**
              * since there is an ad break at 15 seconds but is already played, it should return the 3rd ad break
@@ -107,12 +110,14 @@ class AdPlaybackStateTest {
             assert(playableAdBreak == parsedVMAPData.adBreaks?.get(2))
 
             /** since the ad break is played, mark it as played **/
-            adPlaybackState.onAdBreakStateChange(AdBreak.AdBreakState.PLAYED)
-            adPlaybackState.onAdBreakComplete()
+            adPlaybackState.getAdGroup()?.updateAdBreakState(AdBreak.AdBreakState.PLAYED)
+            adPlaybackState.getAdGroup()?.onAdBreakComplete()
+
 
             /** now assume the user has scrubbed back to 10 seconds **/
-            playableAdBreak =
-                adPlaybackState.getPlayableAdBreak(10F, duration, defaultAdBreakFinder)
+            adPlaybackState.onAdGroupComplete()
+            adPlaybackState.findPlayableAdGroup(10F, duration, defaultAdBreakFinder)
+            playableAdBreak = adPlaybackState.getAdGroup()?.getAdBreak()
 
             /**
              * since there is only pre-roll before 10 position which is already played, it should return null

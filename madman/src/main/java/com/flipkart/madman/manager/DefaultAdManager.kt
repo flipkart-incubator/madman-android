@@ -199,7 +199,7 @@ open class DefaultAdManager(
             /**
              * if the ad state is [AdPlaybackState.AdState.STARTED], fire the AD_STARTED event
              */
-            adPlaybackState.isAdStarted() -> {
+            adPlaybackState.hasAdStarted() -> {
                 notifyAndTrackEvent(Event.AD_STARTED)
                 adPlaybackState.updateAdState(AdPlaybackState.AdState.PLAYING)
                 currentAd?.let {
@@ -212,7 +212,7 @@ open class DefaultAdManager(
             /**
              * if the ad state is [AdPlaybackState.AdState.ENDED], stop the ad and load the next ad break in same ad group if present
              */
-            adPlaybackState.isAdEnded() -> {
+            adPlaybackState.hasAdEnded() -> {
                 updateAdState(AdPlaybackState.AdState.INIT)
                 previousAdProgress = Progress.UNDEFINED
 
@@ -221,7 +221,6 @@ open class DefaultAdManager(
                     it.onAdBreakComplete()
                     notifyAndTrackEvent(Event.AD_STOPPED)
                     notifyAndTrackEvent(Event.AD_COMPLETED)
-                    removeAdMessageHandler()
 
                     if (it.hasMoreAdBreaksInAdGroup()) {
                         /** play the next ad break for same cue point **/
@@ -231,6 +230,7 @@ open class DefaultAdManager(
                         }
                     } else {
                         /** no ad break for this ad group, resume content **/
+                        adPlaybackState.onAdGroupComplete()
                         resumeContent()
                         startContentHandler()
                         return
@@ -263,6 +263,7 @@ open class DefaultAdManager(
      */
     override fun onAdEndedCallback() {
         updateAdState(AdPlaybackState.AdState.ENDED)
+        removeAdMessageHandler()
         adRenderer.removeView()
     }
 

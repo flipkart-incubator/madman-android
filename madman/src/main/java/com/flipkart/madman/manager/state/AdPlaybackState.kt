@@ -34,19 +34,18 @@ class AdPlaybackState(private val adBreaks: List<AdBreak>) {
     private var contentCompleted: Boolean = false
     /** currently playing ad group **/
     private var playableAdGroup: AdGroup? = null
-
-    var adState: AdState = AdState.INIT
+    /** indicates the ad state **/
+    private var adState: AdState = AdState.INIT
 
     enum class AdState {
         INIT, STARTED, PLAYING, PAUSED, ENDED;
     }
 
-    class AdGroup(
-        private val adBreakQueue: Queue<AdBreak>,
-        private val count: Int
+    inner class AdGroup(
+        private val adBreaksInGroup: List<AdBreak>,
+        private val adBreakQueue: Queue<AdBreak> = ArrayDeque(adBreaksInGroup),
+        private val count: Int = adBreaksInGroup.size
     ) {
-        private var adBreakIndex: Int = 0
-
         fun getAdBreak(): AdBreak {
             return adBreakQueue.element()
         }
@@ -56,19 +55,19 @@ class AdPlaybackState(private val adBreaks: List<AdBreak>) {
             adBreak.adSource?.vastAdData = vastData
             return AdDataHelper.createAdFor(
                 adBreak,
-                adBreakIndex,
+                adBreaksInGroup.indexOf(adBreak),
                 count
             )
         }
 
         fun updateAdBreakState(state: AdBreak.AdBreakState) {
             getAdBreak().state = state
+            adBreaks[adBreaks.indexOf(getAdBreak())].state = state
         }
 
         fun onAdBreakComplete() {
             try {
                 adBreakQueue.remove()
-                adBreakIndex++
             } catch (e: NoSuchElementException) {
             }
         }
@@ -121,12 +120,20 @@ class AdPlaybackState(private val adBreaks: List<AdBreak>) {
                 duration,
                 adBreaks
             )
-            playableAdGroup = AdGroup(ArrayDeque(playableAdBreaks), playableAdBreaks.size)
+            playableAdGroup = if (playableAdBreaks.isNotEmpty()) {
+                AdGroup(playableAdBreaks)
+            } else {
+                null
+            }
         }
     }
 
     fun getAdGroup(): AdGroup? {
         return playableAdGroup
+    }
+
+    fun onAdGroupComplete() {
+        playableAdGroup = null
     }
 
     fun isPostRollPlayed(): Boolean {
@@ -155,11 +162,11 @@ class AdPlaybackState(private val adBreaks: List<AdBreak>) {
         return adState == AdState.PAUSED
     }
 
-    fun isAdEnded(): Boolean {
+    fun hasAdEnded(): Boolean {
         return adState == AdState.ENDED
     }
 
-    fun isAdStarted(): Boolean {
+    fun hasAdStarted(): Boolean {
         return adState == AdState.STARTED
     }
 
