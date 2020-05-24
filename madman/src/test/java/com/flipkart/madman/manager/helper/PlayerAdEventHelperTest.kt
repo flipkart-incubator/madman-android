@@ -1,8 +1,25 @@
+/*
+ * Copyright (C) 2020 Flipkart Internet Pvt Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.flipkart.madman.manager.helper
 
+import com.flipkart.madman.component.enums.AdErrorType
 import com.flipkart.madman.component.enums.AdEventType
 import com.flipkart.madman.listener.AdErrorListener
 import com.flipkart.madman.listener.AdEventListener
+import com.flipkart.madman.listener.impl.AdError
 import com.flipkart.madman.listener.impl.AdEvent
 import com.flipkart.madman.manager.event.Event
 import com.flipkart.madman.manager.model.AdElementImpl
@@ -14,8 +31,11 @@ import com.flipkart.madman.testutils.capture
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.*
+import org.mockito.ArgumentCaptor
+import org.mockito.Captor
+import org.mockito.Mock
 import org.mockito.Mockito.*
+import org.mockito.MockitoAnnotations
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -34,6 +54,9 @@ class PlayerAdEventHelperTest {
 
     @Captor
     private lateinit var adEventCaptor: ArgumentCaptor<AdEvent>
+
+    @Captor
+    private lateinit var adErrorCaptor: ArgumentCaptor<AdError>
 
     @Captor
     private lateinit var playerLoadCaptor: ArgumentCaptor<List<String>>
@@ -184,6 +207,20 @@ class PlayerAdEventHelperTest {
         playerAdEventHelper.handleEvent(Event.ALL_AD_COMPLETED, vastAd)
         verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
         assert(adEventCaptor.value.getType() == AdEventType.ALL_AD_COMPLETED)
+        reset(mockAdEventListener)
+
+        /** verify AD_ERROR event **/
+        playerAdEventHelper.handleError(AdErrorType.AD_ERROR, "")
+        verify(mockAdErrorListener, times(1)).onAdError(capture(adErrorCaptor))
+        assert(adErrorCaptor.value.getType() == AdErrorType.AD_ERROR)
+        reset(mockAdErrorListener)
+
+        playerAdEventHelper.removeAdErrorListener(mockAdErrorListener)
+        playerAdEventHelper.removeAdEventListener(mockAdEventListener)
+
+        /** verify ALL_AD_COMPLETED event, but listener is not notified **/
+        playerAdEventHelper.handleEvent(Event.ALL_AD_COMPLETED, vastAd)
+        verify(mockAdEventListener, times(0)).onAdEvent(capture(adEventCaptor))
         reset(mockAdEventListener)
     }
 

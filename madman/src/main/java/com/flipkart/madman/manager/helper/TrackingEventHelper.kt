@@ -32,7 +32,7 @@ class TrackingEventHelper(private var trackingHandler: TrackingHandler) {
         this.trackingHandler = trackingHandler
     }
 
-    fun handleEvent(eventType: Event, ad: VastAd?, errorCode: Int? = null) {
+    fun handleEvent(eventType: Event, ad: VastAd?) {
         val adTracking: VastAd.AdTracking? = ad?.getAdTracking()
         val trackingMap: Map<Tracking.TrackingEvent, List<String>>? = adTracking?.getAdTrackingMap()
         val adElement = ad?.getAdElement()
