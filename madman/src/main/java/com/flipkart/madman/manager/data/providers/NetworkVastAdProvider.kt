@@ -16,12 +16,12 @@
 package com.flipkart.madman.manager.data.providers
 
 import com.flipkart.madman.component.enums.AdErrorType
-import com.flipkart.madman.component.enums.StringErrorConstants
 import com.flipkart.madman.component.model.vmap.AdBreak
 import com.flipkart.madman.component.model.vmap.AdSource
 import com.flipkart.madman.component.model.vmap.AdTagURI
 import com.flipkart.madman.loader.AdLoader
 import com.flipkart.madman.manager.data.VastAdProvider
+import com.flipkart.madman.manager.event.Error
 import com.flipkart.madman.network.model.NetworkAdRequest
 
 /**
@@ -35,9 +35,7 @@ class NetworkVastAdProvider(private val adLoader: AdLoader<NetworkAdRequest>) :
         adBreak.adSource?.adTagURI?.let {
             val adUrl = it.url
             adUrl?.let {
-                adLoader.requestAds(NetworkAdRequest().apply {
-                    url = adUrl
-                }, { vmap ->
+                adLoader.requestAds(NetworkAdRequest(adUrl), { vmap ->
                     /**
                      * The vast data gets wrapped in the VMAP model with one ad break
                      */
@@ -48,20 +46,20 @@ class NetworkVastAdProvider(private val adLoader: AdLoader<NetworkAdRequest>) :
                             listener.onVastFetchSuccess(vast)
                         } else {
                             listener.onVastFetchError(
-                                AdErrorType.NO_AD,
+                                AdErrorType.VAST_ERROR,
                                 "no ad from the given $adUrl"
                             )
                         }
                     } ?: run {
                         listener.onVastFetchError(
-                            AdErrorType.EMPTY_VAST_RESPONSE,
+                            AdErrorType.VAST_ERROR,
                             "no vast from the given $adUrl"
                         )
                     }
-                }, { adErrorType: AdErrorType, message: String? ->
+                }, { _: AdErrorType, message: String? ->
                     listener.onVastFetchError(
-                        adErrorType,
-                        message ?: StringErrorConstants.GENERIC_ERROR
+                        AdErrorType.VAST_ERROR,
+                        message ?: Error.UNKNOWN_ERROR.errorMessage
                     )
                 })
             } ?: run {

@@ -15,8 +15,11 @@
  */
 package com.flipkart.madman.manager.helper
 
+import com.flipkart.madman.component.enums.AdErrorType
 import com.flipkart.madman.component.enums.AdEventType
+import com.flipkart.madman.listener.AdErrorListener
 import com.flipkart.madman.listener.AdEventListener
+import com.flipkart.madman.listener.impl.AdError
 import com.flipkart.madman.listener.impl.AdEvent
 import com.flipkart.madman.manager.event.Event
 import com.flipkart.madman.manager.model.AdElement
@@ -24,26 +27,45 @@ import com.flipkart.madman.manager.model.VastAd
 import com.flipkart.madman.renderer.player.AdPlayer
 
 /**
- * Event helper class
+ * [AdEvent] helper class which notifies all the registered [AdEventListener]
+ *
+ * The [AdManager]  fires the internal [Event] and this class maps the [Event] to [AdEvent]
+ * and interacts with the [AdPlayer]
  */
-class PlayerEventHelper(private val player: AdPlayer) {
+class PlayerAdEventHelper(private val player: AdPlayer) {
     private var adEventListeners: MutableList<AdEventListener>? = null
+    private var adErrorListeners: MutableList<AdErrorListener>? = null
 
-    fun setEventListener(listener: AdEventListener) {
+    fun addEventListener(listener: AdEventListener) {
         if (adEventListeners == null) {
             adEventListeners = ArrayList()
         }
         adEventListeners?.add(listener)
     }
 
+    fun addErrorListener(listener: AdErrorListener) {
+        if (adErrorListeners == null) {
+            adErrorListeners = ArrayList()
+        }
+        adErrorListeners?.add(listener)
+    }
+
+    fun removeAdEventListener(listener: AdEventListener) {
+        adEventListeners?.remove(listener)
+    }
+
+    fun removeAdErrorListener(listener: AdErrorListener) {
+        adErrorListeners?.remove(listener)
+    }
+
     fun handleEvent(eventType: Event, ad: VastAd?) {
         val adElement = ad?.getAdElement()
         when (eventType) {
             Event.CONTENT_RESUME -> {
-                fireEventToListeners(AdEventType.CONTENT_RESUME_REQUESTED, adElement)
+                notifyAllAdEventListeners(AdEventType.CONTENT_RESUME_REQUESTED, adElement)
             }
             Event.CONTENT_PAUSE -> {
-                fireEventToListeners(AdEventType.CONTENT_PAUSE_REQUESTED, adElement)
+                notifyAllAdEventListeners(AdEventType.CONTENT_PAUSE_REQUESTED, adElement)
             }
             Event.LOAD_AD -> {
                 ad?.let {
@@ -54,57 +76,57 @@ class PlayerEventHelper(private val player: AdPlayer) {
                 player.playAd()
             }
             Event.RESUME_AD -> {
-                fireEventToListeners(AdEventType.RESUMED, adElement)
+                notifyAllAdEventListeners(AdEventType.RESUMED, adElement)
                 player.playAd()
             }
             Event.PAUSE_AD -> {
                 player.pauseAd()
-                fireEventToListeners(AdEventType.PAUSED, adElement)
+                notifyAllAdEventListeners(AdEventType.PAUSED, adElement)
             }
             Event.FIRST_QUARTILE -> {
-                fireEventToListeners(AdEventType.FIRST_QUARTILE, adElement)
+                notifyAllAdEventListeners(AdEventType.FIRST_QUARTILE, adElement)
             }
             Event.MIDPOINT -> {
-                fireEventToListeners(AdEventType.MIDPOINT, adElement)
+                notifyAllAdEventListeners(AdEventType.MIDPOINT, adElement)
             }
             Event.THIRD_QUARTILE -> {
-                fireEventToListeners(AdEventType.THIRD_QUARTILE, adElement)
+                notifyAllAdEventListeners(AdEventType.THIRD_QUARTILE, adElement)
             }
             Event.AD_LOADED -> {
-                fireEventToListeners(AdEventType.LOADED, adElement)
+                notifyAllAdEventListeners(AdEventType.LOADED, adElement)
             }
             Event.AD_PROGRESS -> {
-                fireEventToListeners(AdEventType.PROGRESS, adElement)
+                notifyAllAdEventListeners(AdEventType.PROGRESS, adElement)
             }
             Event.AD_STARTED -> {
-                fireEventToListeners(AdEventType.STARTED, adElement)
+                notifyAllAdEventListeners(AdEventType.STARTED, adElement)
             }
             Event.AD_SKIPPED -> {
-                fireEventToListeners(AdEventType.SKIPPED, adElement)
+                notifyAllAdEventListeners(AdEventType.SKIPPED, adElement)
             }
             Event.AD_STOPPED -> {
                 player.stopAd()
             }
             Event.AD_COMPLETED -> {
-                fireEventToListeners(AdEventType.COMPLETED, adElement)
+                notifyAllAdEventListeners(AdEventType.COMPLETED, adElement)
             }
             Event.AD_TAPPED -> {
-                fireEventToListeners(AdEventType.TAPPED, adElement)
+                notifyAllAdEventListeners(AdEventType.TAPPED, adElement)
             }
             Event.AD_BREAK_STARTED -> {
-                fireEventToListeners(AdEventType.AD_BREAK_STARTED, adElement)
+                notifyAllAdEventListeners(AdEventType.AD_BREAK_STARTED, adElement)
             }
             Event.AD_BREAK_LOADED -> {
-                fireEventToListeners(AdEventType.AD_BREAK_READY, adElement)
+                notifyAllAdEventListeners(AdEventType.AD_BREAK_READY, adElement)
             }
             Event.AD_BREAK_ENDED -> {
-                fireEventToListeners(AdEventType.AD_BREAK_ENDED, adElement)
+                notifyAllAdEventListeners(AdEventType.AD_BREAK_ENDED, adElement)
             }
             Event.AD_CTA_CLICKED -> {
-                fireEventToListeners(AdEventType.CLICKED, adElement)
+                notifyAllAdEventListeners(AdEventType.CLICKED, adElement)
             }
             Event.ALL_AD_COMPLETED -> {
-                fireEventToListeners(AdEventType.ALL_AD_COMPLETED, adElement)
+                notifyAllAdEventListeners(AdEventType.ALL_AD_COMPLETED, adElement)
             }
             else -> {
                 // do nothing
@@ -112,15 +134,28 @@ class PlayerEventHelper(private val player: AdPlayer) {
         }
     }
 
-    fun destroy() {
-        adEventListeners?.clear()
-        adEventListeners = null
+    fun handleError(error: AdErrorType, errorMessage: String?) {
+        notifyAllAdErrorListeners(error, errorMessage ?: "")
     }
 
-    private fun fireEventToListeners(eventType: AdEventType, adElement: AdElement?) {
+    fun destroy() {
+        adEventListeners?.clear()
+        adErrorListeners?.clear()
+        adEventListeners = null
+        adErrorListeners = null
+    }
+
+    private fun notifyAllAdEventListeners(eventType: AdEventType, adElement: AdElement?) {
         val adEvent = AdEvent(eventType, adElement)
         adEventListeners?.forEach {
             it.onAdEvent(adEvent)
+        }
+    }
+
+    private fun notifyAllAdErrorListeners(errorType: AdErrorType, errorMessage: String) {
+        val adError = AdError(errorType, errorMessage)
+        adErrorListeners?.forEach {
+            it.onAdError(adError)
         }
     }
 }

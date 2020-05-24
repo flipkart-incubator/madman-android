@@ -63,14 +63,14 @@ class StringAdLoaderTest {
         val mockValidator = DefaultXmlValidator()
         val loader = StringAdLoader(mockParser, mockValidator)
 
-        loader.requestAds(StringAdRequest().apply { response = "<VMAP></VMAP>" }, {
+        loader.requestAds(StringAdRequest("").apply { response = "<VMAP></VMAP>" }, {
 
         }, { _: AdErrorType, message: String? ->
             // since response is invalid
             assert(message != null)
         })
 
-        loader.requestAds(StringAdRequest().apply { response = VMAPUtil.readVMAPWithPreRoll() }, {
+        loader.requestAds(StringAdRequest("").apply { response = VMAPUtil.readVMAPWithPreRoll() }, {
 
         }, { _: AdErrorType, message: String? ->
             // since response is valid
@@ -87,7 +87,7 @@ class StringAdLoaderTest {
         val mockValidator = Mockito.mock(XmlValidator::class.java)
         val loader = StringAdLoader(mockParser, mockValidator)
 
-        loader.requestAds(StringAdRequest().apply { response = null }, {
+        loader.requestAds(StringAdRequest("").apply { response = null }, {
 
         }, { _: AdErrorType, message: String? ->
             assert(message != null)
@@ -127,7 +127,7 @@ class StringAdLoaderTest {
             }
         })
 
-        loader.requestAds(StringAdRequest().apply { response = vmap }, {
+        loader.requestAds(StringAdRequest("").apply { response = vmap }, {
             // verify vmap is valid
             assert(it.version == "1.0")
         }, { _: AdErrorType, message: String? ->
@@ -152,7 +152,7 @@ class StringAdLoaderTest {
             }
         })
 
-        loader.requestAds(StringAdRequest().apply { response = vmap }, {
+        loader.requestAds(StringAdRequest("").apply { response = vmap }, {
         }, { _: AdErrorType, message: String? ->
             // verify message is not null
             assert(message == "VMAP is not valid")
@@ -176,7 +176,7 @@ class StringAdLoaderTest {
 
         val vmap = VMAPUtil.readCorruptVMAP()
 
-        loader.requestAds(StringAdRequest().apply { response = vmap }, {
+        loader.requestAds(StringAdRequest("").apply { response = vmap }, {
         }, { _: AdErrorType, message: String? ->
             // verify message is null
             assert(message != null)

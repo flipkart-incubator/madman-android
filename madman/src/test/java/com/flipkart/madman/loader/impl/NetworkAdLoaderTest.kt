@@ -65,7 +65,7 @@ class NetworkAdLoaderTest {
             DefaultXmlValidator()
         )
 
-        loader.requestAds(NetworkAdRequest().apply { url = "someurl" }, {
+        loader.requestAds(NetworkAdRequest("").apply { url = "someurl" }, {
 
         }, { _: AdErrorType, _: String? ->
         })
@@ -101,7 +101,7 @@ class NetworkAdLoaderTest {
             com.flipkart.madman.testutils.anyObject()
         )
 
-        val request = NetworkAdRequest().apply { url = "someurl" }
+        val request = NetworkAdRequest("").apply { url = "someurl" }
         loader.requestAds(request, {
 
         }, { _: AdErrorType, message: String? ->
@@ -133,7 +133,7 @@ class NetworkAdLoaderTest {
             com.flipkart.madman.testutils.anyObject()
         )
 
-        val request = NetworkAdRequest().apply { url = "someurl" }
+        val request = NetworkAdRequest("").apply { url = "someurl" }
         loader.requestAds(request, {
 
         }, { _: AdErrorType, message: String? ->

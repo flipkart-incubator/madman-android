@@ -1101,6 +1101,8 @@ public final class ImaAdsLoader
   }
 
   private void handleAdEvent(AdEvent adEvent) {
+    Log.d(TAG, "handleAdEvent " + adEvent.getType());
+
     Ad ad = adEvent.getAd();
     switch (adEvent.getType()) {
       case LOADED:

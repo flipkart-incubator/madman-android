@@ -19,7 +19,6 @@ package com.flipkart.madman.component.enums
  * List of all ad errors.
  */
 enum class AdErrorType {
-    AD_REQUEST_MALFORMED,
     AD_REQUEST_NETWORK_FAILURE,
     VMAP_MALFORMED_RESPONSE,
     EMPTY_VMAP_RESPONSE,
@@ -29,5 +28,6 @@ enum class AdErrorType {
     INVALID_CUE_POINTS,
     NO_AD,
     VAST_ERROR,
-    INTERNAL_ERROR
+    INTERNAL_ERROR,
+    UNKNOWN_ERROR
 }

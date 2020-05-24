@@ -35,7 +35,7 @@ object AdDataHelper {
         return getCuePoints(data.adBreaks)
     }
 
-    fun getCuePoints(adBreaks: List<AdBreak>?): List<Float> {
+    private fun getCuePoints(adBreaks: List<AdBreak>?): List<Float> {
         val list = mutableListOf<Float>()
         adBreaks?.forEach {
             val timeOffset = when (it.timeOffset) {

@@ -18,6 +18,4 @@ package com.flipkart.madman.network.model
 /**
  * String ad request, response is already present
  */
-class StringAdRequest : Request {
-    var response: String? = null
-}
+class StringAdRequest(var response: String) : Request

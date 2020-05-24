@@ -16,18 +16,13 @@
 package com.flipkart.madman.manager
 
 import com.flipkart.madman.component.enums.AdErrorType
-import com.flipkart.madman.component.enums.StringErrorConstants
-import com.flipkart.madman.component.enums.VastErrors
 import com.flipkart.madman.component.model.vast.VASTData
 import com.flipkart.madman.component.model.vmap.AdBreak
 import com.flipkart.madman.component.model.vmap.VMAPData
-import com.flipkart.madman.listener.AdErrorListener
-import com.flipkart.madman.listener.AdEventListener
-import com.flipkart.madman.listener.impl.AdError
-import com.flipkart.madman.loader.AdLoader
 import com.flipkart.madman.logger.LogUtil
 import com.flipkart.madman.manager.data.VastAdProvider
 import com.flipkart.madman.manager.data.helper.AdDataHelper
+import com.flipkart.madman.manager.event.Error
 import com.flipkart.madman.manager.event.Event
 import com.flipkart.madman.manager.handler.ProgressHandler
 import com.flipkart.madman.manager.helper.Constant.FIRST_QUARTILE
@@ -36,29 +31,22 @@ import com.flipkart.madman.manager.helper.Constant.THIRD_QUARTILE
 import com.flipkart.madman.manager.model.VastAd
 import com.flipkart.madman.manager.state.AdPlaybackState
 import com.flipkart.madman.network.NetworkLayer
-import com.flipkart.madman.network.model.NetworkAdRequest
-import com.flipkart.madman.provider.ContentProgressProvider
+import com.flipkart.madman.parser.XmlParser
 import com.flipkart.madman.provider.Progress
 import com.flipkart.madman.renderer.AdRenderer
 import com.flipkart.madman.renderer.callback.ViewClickListener
-import com.flipkart.madman.renderer.settings.RenderingSettings
+import com.flipkart.madman.validator.XmlValidator
 
 /**
  * Core part of Madman
  */
 open class DefaultAdManager(
     private val data: VMAPData,
-    adLoader: AdLoader<NetworkAdRequest>,
     networkLayer: NetworkLayer,
-    private val adRenderer: AdRenderer,
-    adEventListener: AdEventListener,
-    private val adErrorListener: AdErrorListener
-) : BaseAdManager(data, adRenderer, adLoader, networkLayer, adEventListener), ViewClickListener {
-
-    /** ad rendering settings **/
-    private val adRenderingSettings: RenderingSettings by lazy {
-        adRenderer.getRenderingSettings()
-    }
+    xmlParser: XmlParser,
+    xmlValidator: XmlValidator,
+    private val adRenderer: AdRenderer
+) : BaseAdManager(data, adRenderer, networkLayer, xmlParser, xmlValidator), ViewClickListener {
 
     /** list of all cue points **/
     private val adCuePoints: List<Float> by lazy {
@@ -74,10 +62,8 @@ open class DefaultAdManager(
         return adCuePoints
     }
 
-    override fun init(contentProgressProvider: ContentProgressProvider) {
-        super.init(contentProgressProvider)
+    override fun init() {
         adRenderer.registerViewClickListener(this)
-
         if (AdDataHelper.hasPreRollAds(data)) {
             LogUtil.log("pre-roll ads present")
         } else {
@@ -125,16 +111,6 @@ open class DefaultAdManager(
         adPlaybackState.getAdGroup()?.getAdBreak()?.let {
             when (it.state) {
                 /**
-                 * If the ad break has been loaded which means we have the vast for the given ad
-                 * send the play ad event as soon as current time is same as the cue point
-                 */
-                AdBreak.AdBreakState.LOADED -> {
-                    if (canPlayAdBreak(it, currentTime, duration)) {
-                        pauseContent()
-                        playAd()
-                    }
-                }
-                /**
                  * If the ad break has not been played yet, and the cue point is within the prefetch range,
                  * fetch the ad and keep it ready
                  */
@@ -144,6 +120,17 @@ open class DefaultAdManager(
                             loadAd()
                             notifyAndTrackEvent(Event.LOAD_AD)
                         }
+                    }
+                }
+                /**
+                 * If the ad break has been loaded which means we have the vast for the given ad
+                 * send the play ad event as soon as current time is same as the cue point
+                 */
+                AdBreak.AdBreakState.LOADED -> {
+                    if (canPlayAdBreak(it, currentTime, duration)) {
+                        notifyAndTrackEvent(Event.AD_BREAK_STARTED)
+                        pauseContent()
+                        playAd()
                     }
                 }
                 /**
@@ -236,6 +223,7 @@ open class DefaultAdManager(
                         }
                     } else {
                         /** no ad break for this ad group, resume content **/
+                        notifyAndTrackEvent(Event.AD_BREAK_ENDED)
                         adPlaybackState.onAdGroupComplete()
                         resumeContent()
                         startContentHandler()
@@ -283,7 +271,7 @@ open class DefaultAdManager(
      * Ad error callback from the player
      */
     override fun onAdErrorCallback() {
-        notifyAndTrackEvent(Event.AD_ERROR)
+        notifyAndTrackError(AdErrorType.INTERNAL_ERROR)
         onAdEndedCallback(false)
     }
 
@@ -333,8 +321,8 @@ open class DefaultAdManager(
 
     override fun destroy() {
         super.destroy()
-        adRenderer.destroy()
         adRenderer.unregisterViewClickListener(this)
+        adRenderer.destroy()
     }
 
     /**
@@ -355,20 +343,16 @@ open class DefaultAdManager(
              */
             override fun onVastFetchSuccess(vastData: VASTData) {
                 updateAdBreakState(AdBreak.AdBreakState.LOADED)
+                notifyAndTrackEvent(Event.AD_BREAK_LOADED)
+
                 currentAd = adPlaybackState.getAdGroup()?.getVastAd(vastData)
 
                 if (currentAd?.getAdMediaUrls()?.isNotEmpty() == true) {
                     onSuccess()
                 } else {
-                    notifyAndTrackEvent(
-                        Event.AD_ERROR,
-                        VastErrors.mapErrorTypeToInt(AdErrorType.NO_MEDIA_URL)
-                    )
-                    adErrorListener.onAdError(
-                        AdError(
-                            AdErrorType.NO_MEDIA_URL,
-                            StringErrorConstants.NO_MEDIA_URL
-                        )
+                    notifyAndTrackError(
+                        AdErrorType.NO_MEDIA_URL,
+                        Error.NO_MEDIA_FILE_ERROR.errorMessage
                     )
                 }
             }
@@ -379,8 +363,7 @@ open class DefaultAdManager(
              */
             override fun onVastFetchError(errorType: AdErrorType, message: String) {
                 updateAdBreakState(AdBreak.AdBreakState.ERROR)
-                notifyAndTrackEvent(Event.VAST_ERROR, VastErrors.mapErrorTypeToInt(errorType))
-                adErrorListener.onAdError(AdError(errorType, message))
+                notifyAndTrackError(errorType, message)
             }
         })
     }
@@ -413,7 +396,7 @@ open class DefaultAdManager(
      * check if the given ad break be preloaded
      */
     private fun canPreloadAdBreak(adBreak: AdBreak, currentTime: Float): Boolean {
-        return adBreak.timeOffsetInSec - currentTime <= adRenderingSettings.getPreloadTime() && adBreak.timeOffsetInSec != -1f
+        return adBreak.timeOffsetInSec - currentTime <= adRenderer.getRenderingSettings().getPreloadTime() && adBreak.timeOffsetInSec != -1f
     }
 
     /**
@@ -448,9 +431,17 @@ open class DefaultAdManager(
     /**
      * notify all the registered event handlers for the given event
      */
-    protected fun notifyAndTrackEvent(event: Event, errorCode: Int? = null) {
+    private fun notifyAndTrackEvent(event: Event) {
         playerAdEventHelper.handleEvent(event, currentAd)
-        trackingEventHelper.handleEvent(event, currentAd, errorCode)
+        trackingEventHelper.handleEvent(event, currentAd)
+    }
+
+    /**
+     * notify all the registered event handlers for the given event
+     */
+    private fun notifyAndTrackError(errorCode: AdErrorType, errorMessage: String? = "") {
+        playerAdEventHelper.handleError(errorCode, errorMessage)
+        trackingEventHelper.handleError(errorCode, currentAd)
     }
 
     companion object {

@@ -16,9 +16,9 @@
 package com.flipkart.madman.loader.impl
 
 import com.flipkart.madman.component.enums.AdErrorType
-import com.flipkart.madman.component.enums.StringErrorConstants
 import com.flipkart.madman.component.model.vmap.VMAPData
 import com.flipkart.madman.loader.AdLoader
+import com.flipkart.madman.manager.event.Error
 import com.flipkart.madman.network.model.Request
 import com.flipkart.madman.parser.XmlParser
 import com.flipkart.madman.validator.XmlValidator
@@ -54,7 +54,7 @@ abstract class BaseAdLoader<T : Request>(
                     }
                 } ?: run {
                     /** vmap is empty **/
-                    onFailure(AdErrorType.INVALID_VMAP, StringErrorConstants.EMPTY_VMAP)
+                    onFailure(AdErrorType.INVALID_VMAP, Error.VMAP_EMPTY_RESPONSE.errorMessage)
                 }
             }
         })

@@ -38,10 +38,8 @@ enum class Event {
     AD_CTA_CLICKED,
     AD_PAUSED,
     AD_RESUMED,
-    AD_ERROR,
     AD_BREAK_LOADED,
     AD_BREAK_STARTED,
     AD_BREAK_ENDED,
     ALL_AD_COMPLETED,
-    VAST_ERROR
 }

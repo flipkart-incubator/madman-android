@@ -16,8 +16,9 @@
 package com.flipkart.madman.manager
 
 import com.flipkart.madman.component.model.vmap.VMAPData
+import com.flipkart.madman.listener.AdErrorListener
 import com.flipkart.madman.listener.AdEventListener
-import com.flipkart.madman.loader.AdLoader
+import com.flipkart.madman.loader.impl.NetworkAdLoader
 import com.flipkart.madman.manager.callback.AdPlayerCallback
 import com.flipkart.madman.manager.data.VastAdProvider
 import com.flipkart.madman.manager.data.providers.NetworkVastAdProvider
@@ -28,16 +29,16 @@ import com.flipkart.madman.manager.finder.DefaultAdBreakFinder
 import com.flipkart.madman.manager.handler.AdProgressUpdateListener
 import com.flipkart.madman.manager.handler.ContentProgressUpdateListener
 import com.flipkart.madman.manager.handler.ProgressHandler
-import com.flipkart.madman.manager.helper.PlayerEventHelper
+import com.flipkart.madman.manager.helper.PlayerAdEventHelper
 import com.flipkart.madman.manager.helper.TrackingEventHelper
 import com.flipkart.madman.manager.state.AdPlaybackState
 import com.flipkart.madman.manager.tracking.DefaultTrackingHandler
-import com.flipkart.madman.manager.tracking.TrackingHandler
 import com.flipkart.madman.network.NetworkLayer
-import com.flipkart.madman.network.model.NetworkAdRequest
+import com.flipkart.madman.parser.XmlParser
 import com.flipkart.madman.provider.ContentProgressProvider
 import com.flipkart.madman.renderer.AdRenderer
 import com.flipkart.madman.renderer.player.AdPlayer
+import com.flipkart.madman.validator.XmlValidator
 
 /**
  * Base implementation of [AdManager]
@@ -45,28 +46,35 @@ import com.flipkart.madman.renderer.player.AdPlayer
  * Implements [AdPlayer.AdPlayerCallback]
  */
 abstract class BaseAdManager(
-    private val data: VMAPData,
-    private val adRenderer: AdRenderer,
-    private val adLoader: AdLoader<NetworkAdRequest>,
+    data: VMAPData,
+    adRenderer: AdRenderer,
     networkLayer: NetworkLayer,
-    adEventListener: AdEventListener
+    xmlParser: XmlParser,
+    xmlValidator: XmlValidator
 ) : AdManager, AdPlayerCallback(),
     ContentProgressUpdateListener,
     AdProgressUpdateListener {
     private lateinit var contentProgressProvider: ContentProgressProvider
 
-    /** ad player interface **/
+    /** [AdPlayer] provided by the [AdRenderer], registers this class as a callback **/
     private val player: AdPlayer by lazy {
         val player = adRenderer.getAdPlayer()
         player.registerAdPlayerCallback(this)
         player
     }
 
-    /** player event handler helper class **/
-    protected val playerAdEventHelper: PlayerEventHelper by lazy {
-        val handler = PlayerEventHelper(player)
-        handler.setEventListener(adEventListener)
-        handler
+    /** NetworkAdLoader to fetch ads from network **/
+    private val networkAdLoader = NetworkAdLoader(networkLayer, xmlParser, xmlValidator)
+
+    /** [AdBreakFinder] used to fetch next playable ad break **/
+    protected lateinit var adBreakFinder: AdBreakFinder
+
+    /** [VastAdProvider] which provides the [VastAd] **/
+    protected lateinit var vastAdProvider: VastAdProvider
+
+    /** Helper class which notifies all registered [AdEventListener] **/
+    protected val playerAdEventHelper: PlayerAdEventHelper by lazy {
+        PlayerAdEventHelper(player)
     }
 
     /** tracking handler helper class **/
@@ -77,36 +85,46 @@ abstract class BaseAdManager(
     /** represent ad state **/
     protected var adPlaybackState: AdPlaybackState = AdPlaybackState(data.adBreaks ?: emptyList())
 
-    /** progress handler to fetch content/ad progress **/
+    /** [ProgressHandler] to fetch progress for content and ad **/
     protected val progressHandler: ProgressHandler by lazy {
         ProgressHandler(contentProgressProvider, player, null)
     }
 
-    /** ad break finder, used to fetch next playable ad break **/
-    protected val adBreakFinder: AdBreakFinder by lazy {
-        createAdBreakFinder()
-    }
-
-    /** vast ad provider **/
-    protected val vastAdProvider: VastAdProvider by lazy {
-        createVastAdProvider()
-    }
-
     override fun init(contentProgressProvider: ContentProgressProvider) {
         this.contentProgressProvider = contentProgressProvider
+        this.adBreakFinder = DefaultAdBreakFinder()
+        this.vastAdProvider =
+            VastAdProviderImpl(StringVastAdProvider(), NetworkVastAdProvider(networkAdLoader))
+        init()
     }
 
-    /**
-     * override tracking handler
-     */
-    override fun addTrackingHandler(handler: TrackingHandler) {
-        super.addTrackingHandler(handler)
-        trackingEventHelper.setTrackingHandler(handler)
+    override fun init(
+        contentProgressProvider: ContentProgressProvider,
+        adBreakFinder: AdBreakFinder,
+        vastAdProvider: VastAdProvider
+    ) {
+        this.contentProgressProvider = contentProgressProvider
+        this.adBreakFinder = adBreakFinder
+        this.vastAdProvider = vastAdProvider
+        init()
     }
 
-    /**
-     * destroy [AdManager]
-     */
+    override fun addAdEventListener(listener: AdEventListener) {
+        playerAdEventHelper.addEventListener(listener)
+    }
+
+    override fun removeAdEventListener(listener: AdEventListener) {
+        playerAdEventHelper.removeAdEventListener(listener)
+    }
+
+    override fun addAdErrorListener(listener: AdErrorListener) {
+        playerAdEventHelper.addErrorListener(listener)
+    }
+
+    override fun removeAdErrorListener(listener: AdErrorListener) {
+        playerAdEventHelper.removeAdErrorListener(listener)
+    }
+
     override fun destroy() {
         player.unregisterAdPlayerCallback(this)
         playerAdEventHelper.destroy()
@@ -114,24 +132,12 @@ abstract class BaseAdManager(
     }
 
     /**
-     * creates a [VastAdProvider]
+     * Called when [AdManager] is initialized
      */
-    protected open fun createVastAdProvider(): VastAdProvider {
-        return VastAdProviderImpl(
-            StringVastAdProvider(),
-            NetworkVastAdProvider(adLoader)
-        )
-    }
+    protected abstract fun init()
 
     /**
-     * creates a [AdBreakFinder]
-     */
-    protected open fun createAdBreakFinder(): AdBreakFinder {
-        return DefaultAdBreakFinder()
-    }
-
-    /**
-     * Start the content handler
+     * start the content handler
      */
     protected fun startContentHandler() {
         removeContentHandler()
@@ -140,7 +146,7 @@ abstract class BaseAdManager(
     }
 
     /**
-     * remove the media handler
+     * remove the content handler
      */
     protected fun removeContentHandler() {
         progressHandler.removeMessagesFor(ProgressHandler.MessageCode.CONTENT_MESSAGE)

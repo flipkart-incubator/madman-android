@@ -51,4 +51,11 @@ object VastErrors {
         }
         return UNDEFINED_ERROR
     }
+
+    fun mapIntToErrorType(value: Int?): AdErrorType {
+        when(value) {
+            NO_MEDIA_FILE_ERROR -> return AdErrorType.NO_MEDIA_URL
+        }
+        return AdErrorType.UNKNOWN_ERROR
+    }
 }

@@ -15,7 +15,9 @@
  */
 package com.flipkart.madman.manager.helper
 
+import com.flipkart.madman.component.enums.AdErrorType
 import com.flipkart.madman.component.model.common.Tracking
+import com.flipkart.madman.manager.event.Error
 import com.flipkart.madman.manager.event.Event
 import com.flipkart.madman.manager.model.AdElement
 import com.flipkart.madman.manager.model.VastAd
@@ -24,9 +26,7 @@ import com.flipkart.madman.manager.tracking.TrackingHandler
 /**
  * Tracking helper class
  */
-class TrackingEventHelper(
-    private var trackingHandler: TrackingHandler
-) {
+class TrackingEventHelper(private var trackingHandler: TrackingHandler) {
 
     fun setTrackingHandler(trackingHandler: TrackingHandler) {
         this.trackingHandler = trackingHandler
@@ -74,20 +74,29 @@ class TrackingEventHelper(
                     adElement
                 )
             }
-            Event.AD_ERROR -> {
-                adTracking?.getAdErrorUrls()?.let {
-                    val replacedUrls = replaceWithErrorCode(it, errorCode)
-                    track(Tracking.TrackingEvent.ERROR, replacedUrls, adElement)
-                }
+            else -> {
+                // do nothing
             }
-            Event.VAST_ERROR -> {
+        }
+    }
+
+    fun handleError(error: AdErrorType, ad: VastAd?) {
+        val adTracking: VastAd.AdTracking? = ad?.getAdTracking()
+        val adElement = ad?.getAdElement()
+        val errorCode = Error.mapErrorTypeToError(error).errorCode
+
+        when (error) {
+            AdErrorType.VAST_ERROR, AdErrorType.NO_MEDIA_URL -> {
                 adTracking?.getVastErrorUrls()?.let {
                     val replacedUrls = replaceWithErrorCode(it, errorCode)
                     track(Tracking.TrackingEvent.ERROR, replacedUrls, adElement)
                 }
             }
             else -> {
-                // do nothing
+                adTracking?.getAdErrorUrls()?.let {
+                    val replacedUrls = replaceWithErrorCode(it, errorCode)
+                    track(Tracking.TrackingEvent.ERROR, replacedUrls, adElement)
+                }
             }
         }
     }

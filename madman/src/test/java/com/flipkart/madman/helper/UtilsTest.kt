@@ -38,9 +38,4 @@ class UtilsTest {
         assert(Utils.convertAdTimeOffsetToSeconds("00:00:00.000") == 0F)
         assert(Utils.convertAdTimeOffsetToSeconds(null) == Float.MAX_VALUE)
     }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun testPrecondition() {
-        Precondition.checkNonNull(null, "")
-    }
 }

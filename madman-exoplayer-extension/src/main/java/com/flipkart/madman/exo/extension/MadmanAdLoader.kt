@@ -215,8 +215,6 @@ class MadmanAdLoader private constructor(
         adCallbacks = ArrayList(/* initialCapacity= */1)
 
         madman = Madman.Builder()
-            .setAdErrorListener(this)
-            .setAdEventListener(this)
             .setAdLoadListener(this)
             .setNetworkLayer(networkLayer)
             .build(context)
@@ -249,12 +247,10 @@ class MadmanAdLoader private constructor(
             DefaultAdRenderer.Builder().setPlayer(this).setContainer(adViewGroup).build(null)
 
         if (adTagUri != null) {
-            val request = NetworkAdRequest()
-            request.url = adTagUri.toString()
+            val request = NetworkAdRequest(adTagUri.toString())
             madman.requestAds(request, adRenderer)
         } else {
-            val request = StringAdRequest()
-            request.response = adsResponse
+            val request = StringAdRequest(adsResponse ?: "")
             madman.requestAds(request, adRenderer)
         }
     }
@@ -360,6 +356,8 @@ class MadmanAdLoader private constructor(
     override fun onAdManagerLoaded(manager: AdManager) {
         pendingAdRequestContext = null
         this.adsManager = manager
+        this.adsManager?.addAdEventListener(this)
+        this.adsManager?.addAdErrorListener(this)
         if (player != null) {
             // If a player is attached already, start playback immediately.
             try {
@@ -368,6 +366,10 @@ class MadmanAdLoader private constructor(
                 maybeNotifyInternalError("onAdManagerLoaded", e)
             }
         }
+    }
+
+    override fun onAdManagerLoadFailed(error: AdErrorListener.AdError) {
+        onAdError(error)
     }
 
     // AdEvent.AdEventListener implementation.
