@@ -83,13 +83,13 @@ abstract class BaseAdManager(
         TrackingEventHelper(DefaultTrackingHandler(networkLayer))
     }
 
-    /** represent ad state **/
-    protected var adPlaybackState: AdPlaybackState = AdPlaybackState(data.adBreaks ?: emptyList())
-
     /** [ProgressHandler] to fetch progress for content and ad **/
     protected val progressHandler: ProgressHandler by lazy {
         ProgressHandler(contentProgressProvider, player, null)
     }
+
+    /** represent ad state **/
+    var adPlaybackState: AdPlaybackState = AdPlaybackState(data.adBreaks ?: emptyList())
 
     override fun init(contentProgressProvider: ContentProgressProvider) {
         this.contentProgressProvider = contentProgressProvider

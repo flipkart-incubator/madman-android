@@ -19,6 +19,7 @@ package com.flipkart.madman.manager
 import com.flipkart.madman.component.enums.AdErrorType
 import com.flipkart.madman.component.enums.AdEventType
 import com.flipkart.madman.component.model.vast.VASTData
+import com.flipkart.madman.component.model.vmap.AdBreak
 import com.flipkart.madman.listener.AdErrorListener
 import com.flipkart.madman.listener.AdEventListener
 import com.flipkart.madman.listener.impl.AdError
@@ -366,5 +367,37 @@ class DefaultAdManagerTest {
         assert(adEventCaptor.value.getType() == AdEventType.LOADED)
         assert(adEventCaptor.value.getAdElement() != null)
         verify(mockAdPlayer, times(1)).loadAd(anyObject())
+    }
+
+    /**
+     * Test to verify that [AdPlaybackState] returns the correct ad break
+     */
+    @Test
+    fun testAdPlaybackStateForDifferentCases() {
+        val vmap = VMAPUtil.createVMAP(true)
+        adManager = DefaultAdManager(
+            vmap,
+            mockNetworkLayer,
+            mockXmlParser,
+            mockXmlValidator,
+            mockAdRenderer
+        )
+        adManager?.addAdErrorListener(mockAdErrorListener)
+        adManager?.addAdEventListener(mockAdEventListener)
+
+        /** initialise the ad manager **/
+        adManager?.init(
+            mockContentProgressProvider,
+            DefaultAdBreakFinder(),
+            VastAdProviderImpl(mockStringVastAdProvider, mockNetworkVastAdProvider)
+        )
+
+        /** mock content provider to return 0 ie content is starting **/
+        `when`(mockContentProgressProvider.getContentProgress()).thenReturn(Progress(0, 10000))
+
+        /** verify there is ad break to be played and other properties **/
+        assert(adManager?.adPlaybackState?.getAdGroup()?.getAdBreak() != null)
+        assert(adManager?.adPlaybackState?.getAdGroup()?.getAdBreak()?.timeOffsetInSec == 0f)
+        assert(adManager?.adPlaybackState?.getAdGroup()?.getAdBreak()?.timeOffset == AdBreak.TimeOffsetTypes.START)
     }
 }
