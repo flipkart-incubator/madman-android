@@ -87,14 +87,14 @@ class StringAdLoaderTest {
         val mockValidator = Mockito.mock(XmlValidator::class.java)
         val loader = StringAdLoader(mockParser, mockValidator)
 
-        loader.requestAds(StringAdRequest("").apply { response = null }, {
+        loader.requestAds(StringAdRequest(""), {
 
         }, { _: AdErrorType, message: String? ->
             assert(message != null)
         })
 
-        // makes sure parse method is not called
-        Mockito.verify(mockParser, times(0))
+        // makes sure parse method is called
+        Mockito.verify(mockParser, times(1))
             .parse(
                 anyString(),
                 anyObject()

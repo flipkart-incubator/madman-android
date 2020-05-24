@@ -22,8 +22,15 @@ class Tracking {
     /** event type eg breakStart, breakEnd, error **/
     var event: String? = null
 
+    /**
+     * for cases such as progress event, the offset indicates the time value at which the event should
+     * be triggered. Eg HH:MM:SS or HH:MM:SS.mmm or n%
+     */
+    var offset: Float? = null
+
     companion object {
         const val EVENT_XML_ATTR = "event"
+        const val OFFSET_XML_ATTR = "offset"
     }
 
     enum class TrackingEvent {
@@ -33,6 +40,7 @@ class Tracking {
         THIRD_QUARTILE,
         COMPLETE,
         SKIP,
+        PROGRESS,
         FULLSCREEN,
         EXIT_FULLSCREEN,
         MUTE,
@@ -59,6 +67,7 @@ class Tracking {
                     "thirdQuartile" -> return THIRD_QUARTILE
                     "complete" -> return COMPLETE
                     "skip" -> return SKIP
+                    "progress" -> return PROGRESS
                     "fullscreen" -> return FULLSCREEN
                     "exitFullscreen" -> return EXIT_FULLSCREEN
                     "mute" -> return MUTE

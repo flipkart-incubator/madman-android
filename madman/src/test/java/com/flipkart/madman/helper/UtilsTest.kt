@@ -37,5 +37,7 @@ class UtilsTest {
         assert(Utils.convertAdTimeOffsetToSeconds("00:00:00.00") == 0F)
         assert(Utils.convertAdTimeOffsetToSeconds("00:00:00.000") == 0F)
         assert(Utils.convertAdTimeOffsetToSeconds(null) == Float.MAX_VALUE)
+
+        assert(Utils.convertDateFormatToSeconds(null) == -1.0)
     }
 }

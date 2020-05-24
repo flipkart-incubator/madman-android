@@ -128,7 +128,7 @@ open class DefaultAdManager(
                  */
                 AdBreak.AdBreakState.LOADED -> {
                     if (canPlayAdBreak(it, currentTime, duration)) {
-                        notifyAndTrackEvent(Event.AD_BREAK_STARTED)
+//                        notifyAndTrackEvent(Event.AD_BREAK_STARTED)
                         pauseContent()
                         playAd()
                     }
@@ -223,7 +223,7 @@ open class DefaultAdManager(
                         }
                     } else {
                         /** no ad break for this ad group, resume content **/
-                        notifyAndTrackEvent(Event.AD_BREAK_ENDED)
+//                        notifyAndTrackEvent(Event.AD_BREAK_ENDED)
                         adPlaybackState.onAdGroupComplete()
                         resumeContent()
                         startContentHandler()
@@ -343,7 +343,7 @@ open class DefaultAdManager(
              */
             override fun onVastFetchSuccess(vastData: VASTData) {
                 updateAdBreakState(AdBreak.AdBreakState.LOADED)
-                notifyAndTrackEvent(Event.AD_BREAK_LOADED)
+//                notifyAndTrackEvent(Event.AD_BREAK_LOADED)
 
                 currentAd = adPlaybackState.getAdGroup()?.getVastAd(vastData)
 

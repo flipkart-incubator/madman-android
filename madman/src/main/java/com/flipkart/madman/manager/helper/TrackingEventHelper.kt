@@ -52,6 +52,9 @@ class TrackingEventHelper(private var trackingHandler: TrackingHandler) {
             Event.MIDPOINT -> {
                 track(Tracking.TrackingEvent.MIDPOINT, trackingMap, adElement)
             }
+            Event.AD_PROGRESS -> {
+                // todo: send ad progress tracking events if present with offset
+            }
             Event.THIRD_QUARTILE -> {
                 track(Tracking.TrackingEvent.THIRD_QUARTILE, trackingMap, adElement)
             }
@@ -93,13 +96,11 @@ class TrackingEventHelper(private var trackingHandler: TrackingHandler) {
                     track(Tracking.TrackingEvent.ERROR, replacedUrls, adElement)
                 }
             }
-            AdErrorType.AD_ERROR -> {
+            else -> {
                 adTracking?.getAdErrorUrls()?.let {
                     val replacedUrls = replaceWithErrorCode(it, errorCode)
                     track(Tracking.TrackingEvent.ERROR, replacedUrls, adElement)
                 }
-            }
-            else -> {
             }
         }
     }

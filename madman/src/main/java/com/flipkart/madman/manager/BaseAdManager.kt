@@ -33,6 +33,7 @@ import com.flipkart.madman.manager.helper.PlayerAdEventHelper
 import com.flipkart.madman.manager.helper.TrackingEventHelper
 import com.flipkart.madman.manager.state.AdPlaybackState
 import com.flipkart.madman.manager.tracking.DefaultTrackingHandler
+import com.flipkart.madman.manager.tracking.TrackingHandler
 import com.flipkart.madman.network.NetworkLayer
 import com.flipkart.madman.parser.XmlParser
 import com.flipkart.madman.provider.ContentProgressProvider
@@ -123,6 +124,10 @@ abstract class BaseAdManager(
 
     override fun removeAdErrorListener(listener: AdErrorListener) {
         playerAdEventHelper.removeAdErrorListener(listener)
+    }
+
+    override fun addTrackingHandler(handler: TrackingHandler) {
+        trackingEventHelper.setTrackingHandler(handler)
     }
 
     override fun destroy() {

@@ -19,18 +19,17 @@ package com.flipkart.madman.manager
 import com.flipkart.madman.component.enums.AdErrorType
 import com.flipkart.madman.component.enums.AdEventType
 import com.flipkart.madman.component.model.vast.VASTData
-import com.flipkart.madman.component.model.vmap.VMAPData
 import com.flipkart.madman.listener.AdErrorListener
 import com.flipkart.madman.listener.AdEventListener
 import com.flipkart.madman.listener.impl.AdError
 import com.flipkart.madman.listener.impl.AdEvent
-import com.flipkart.madman.loader.AdLoader
 import com.flipkart.madman.manager.data.VastAdProvider
 import com.flipkart.madman.manager.data.providers.NetworkVastAdProvider
 import com.flipkart.madman.manager.data.providers.StringVastAdProvider
 import com.flipkart.madman.manager.data.providers.VastAdProviderImpl
+import com.flipkart.madman.manager.finder.DefaultAdBreakFinder
 import com.flipkart.madman.network.NetworkLayer
-import com.flipkart.madman.network.model.NetworkAdRequest
+import com.flipkart.madman.parser.XmlParser
 import com.flipkart.madman.provider.ContentProgressProvider
 import com.flipkart.madman.provider.Progress
 import com.flipkart.madman.renderer.AdRenderer
@@ -39,6 +38,7 @@ import com.flipkart.madman.renderer.settings.DefaultRenderingSettings
 import com.flipkart.madman.testutils.VMAPUtil
 import com.flipkart.madman.testutils.anyObject
 import com.flipkart.madman.testutils.capture
+import com.flipkart.madman.validator.XmlValidator
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -58,10 +58,13 @@ import org.robolectric.shadows.ShadowLooper
 class DefaultAdManagerTest {
 
     @Mock
-    private lateinit var mockAdLoader: AdLoader<NetworkAdRequest>
+    private lateinit var mockNetworkLayer: NetworkLayer
 
     @Mock
-    private lateinit var mockNetworkLayer: NetworkLayer
+    private lateinit var mockXmlParser: XmlParser
+
+    @Mock
+    private lateinit var mockXmlValidator: XmlValidator
 
     @Mock
     private lateinit var mockAdEventListener: AdEventListener
@@ -107,6 +110,17 @@ class DefaultAdManagerTest {
 
         /** return default rendering settings **/
         `when`(mockAdRenderer.getAdPlayer()).thenReturn(mockAdPlayer)
+
+        val vmap = VMAPUtil.createVMAP(true)
+        adManager = DefaultAdManager(
+            vmap,
+            mockNetworkLayer,
+            mockXmlParser,
+            mockXmlValidator,
+            mockAdRenderer
+        )
+        adManager?.addAdErrorListener(mockAdErrorListener)
+        adManager?.addAdEventListener(mockAdEventListener)
     }
 
     @After
@@ -124,13 +138,14 @@ class DefaultAdManagerTest {
 
         adManager = DefaultAdManager(
             vmap,
-            mockAdLoader,
             mockNetworkLayer,
-            mockAdRenderer,
-            mockAdEventListener,
-            mockAdErrorListener
+            mockXmlParser,
+            mockXmlValidator,
+            mockAdRenderer
         )
 
+        adManager?.addAdErrorListener(mockAdErrorListener)
+        adManager?.addAdEventListener(mockAdEventListener)
         /** initialise the ad manager **/
         adManager?.init(mockContentProgressProvider)
 
@@ -143,13 +158,14 @@ class DefaultAdManagerTest {
 
         adManager = DefaultAdManager(
             vmap,
-            mockAdLoader,
             mockNetworkLayer,
-            mockAdRenderer,
-            mockAdEventListener,
-            mockAdErrorListener
+            mockXmlParser,
+            mockXmlValidator,
+            mockAdRenderer
         )
 
+        adManager?.addAdErrorListener(mockAdErrorListener)
+        adManager?.addAdEventListener(mockAdEventListener)
         /** initialise the ad manager **/
         adManager?.init(mockContentProgressProvider)
 
@@ -164,17 +180,6 @@ class DefaultAdManagerTest {
      */
     @Test
     fun testBehaviourWhenAdIsPausedAndResumed() {
-        val vmap = VMAPUtil.createVMAP(true)
-
-        adManager = DefaultAdManager(
-            vmap,
-            mockAdLoader,
-            mockNetworkLayer,
-            mockAdRenderer,
-            mockAdEventListener,
-            mockAdErrorListener
-        )
-
         /** initialise the ad manager **/
         adManager?.init(mockContentProgressProvider)
 
@@ -220,18 +225,6 @@ class DefaultAdManagerTest {
      */
     @Test
     fun testWhenVASTHasNoMediaFiles() {
-        val vmap = VMAPUtil.createVMAP(true)
-
-        adManager = MockedAdManager(
-            vmap,
-            mockAdLoader,
-            mockNetworkLayer,
-            mockAdRenderer,
-            mockAdEventListener,
-            mockAdErrorListener,
-            VastAdProviderImpl(mockStringVastAdProvider, mockNetworkVastAdProvider)
-        )
-
         val answer = Answer { invocation ->
             val listener = invocation.getArgument<VastAdProvider.Listener>(1)
             // mimics return empty vast data
@@ -240,7 +233,11 @@ class DefaultAdManagerTest {
         doAnswer(answer).`when`(mockStringVastAdProvider).getVASTAd(anyObject(), anyObject())
 
         /** initialise the ad manager **/
-        adManager?.init(mockContentProgressProvider)
+        adManager?.init(
+            mockContentProgressProvider,
+            DefaultAdBreakFinder(),
+            VastAdProviderImpl(mockStringVastAdProvider, mockNetworkVastAdProvider)
+        )
 
         /** ad event listener is not called **/
         verify(mockAdEventListener, times(0)).onAdEvent(capture(adEventCaptor))
@@ -255,34 +252,29 @@ class DefaultAdManagerTest {
      */
     @Test
     fun testWhenVastFetchFails() {
-        val vmap = VMAPUtil.createVMAP(true)
-
-        adManager = MockedAdManager(
-            vmap,
-            mockAdLoader,
-            mockNetworkLayer,
-            mockAdRenderer,
-            mockAdEventListener,
-            mockAdErrorListener,
-            VastAdProviderImpl(mockStringVastAdProvider, mockNetworkVastAdProvider)
-        )
-
         val answer = Answer { invocation ->
             val listener = invocation.getArgument<VastAdProvider.Listener>(1)
             // mimics a vast fetch error callback
-            listener.onVastFetchError(AdErrorType.VAST_ERROR, "Error while fetching")
+            listener.onVastFetchError(
+                AdErrorType.VAST_SCHEMA_VALIDATION_ERROR,
+                "Error while fetching"
+            )
         }
         doAnswer(answer).`when`(mockStringVastAdProvider).getVASTAd(anyObject(), anyObject())
 
         /** initialise the ad manager **/
-        adManager?.init(mockContentProgressProvider)
+        adManager?.init(
+            mockContentProgressProvider,
+            DefaultAdBreakFinder(),
+            VastAdProviderImpl(mockStringVastAdProvider, mockNetworkVastAdProvider)
+        )
 
         /** ad event listener is not called **/
         verify(mockAdEventListener, times(0)).onAdEvent(capture(adEventCaptor))
 
         /** ad error listener is called with VAST_ERROR error **/
         verify(mockAdErrorListener, times(1)).onAdError(capture(adErrorCaptor))
-        assert(adErrorCaptor.value.getType() == AdErrorType.VAST_ERROR)
+        assert(adErrorCaptor.value.getType() == AdErrorType.VAST_SCHEMA_VALIDATION_ERROR)
     }
 
     /**
@@ -290,17 +282,6 @@ class DefaultAdManagerTest {
      */
     @Test
     fun testWhenAdIsSkipped() {
-        val vmap = VMAPUtil.createVMAP(true)
-
-        adManager = DefaultAdManager(
-            vmap,
-            mockAdLoader,
-            mockNetworkLayer,
-            mockAdRenderer,
-            mockAdEventListener,
-            mockAdErrorListener
-        )
-
         /** initialise the ad manager **/
         adManager?.init(mockContentProgressProvider)
 
@@ -326,31 +307,64 @@ class DefaultAdManagerTest {
         ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
 
         /** ad event listener is called with STOPPED and CONTENT_RESUME_REQUESTED event **/
-        verify(mockAdEventListener, times(2)).onAdEvent(capture(adEventCaptor))
+        verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
         assert(adEventCaptor.value.getType() == AdEventType.CONTENT_RESUME_REQUESTED)
     }
 
     /**
-     * Test instance of [DefaultAdManager]
+     * Test when vast has no ads
      */
-    class MockedAdManager(
-        data: VMAPData,
-        adLoader: AdLoader<NetworkAdRequest>,
-        networkLayer: NetworkLayer,
-        adRenderer: AdRenderer,
-        adEventListener: AdEventListener,
-        adErrorListener: AdErrorListener,
-        private val mockedVastAdProvider: VastAdProvider
-    ) : DefaultAdManager(
-        data,
-        adLoader,
-        networkLayer,
-        adRenderer,
-        adEventListener,
-        adErrorListener
-    ) {
-        override fun createVastAdProvider(): VastAdProvider {
-            return mockedVastAdProvider
+    @Test
+    fun testWhenVastHasNoAds() {
+        val vmap = VMAPUtil.createVMAPWithNoAds()
+        adManager = DefaultAdManager(
+            vmap,
+            mockNetworkLayer,
+            mockXmlParser,
+            mockXmlValidator,
+            mockAdRenderer
+        )
+        adManager?.addAdErrorListener(mockAdErrorListener)
+        adManager?.addAdEventListener(mockAdEventListener)
+
+        /** initialise the ad manager **/
+        adManager?.init(mockContentProgressProvider)
+
+        /** ad event listener is called for CONTENT_RESUME **/
+        verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
+
+        /** ad error listener is called with NO_AD error **/
+        verify(mockAdErrorListener, times(1)).onAdError(capture(adErrorCaptor))
+        assert(adErrorCaptor.value.getType() == AdErrorType.NO_AD)
+    }
+
+    /**
+     * Test to verify the behaviour of [AdManager] for a post roll ad
+     */
+    @Test
+    fun testBehaviourWithPostRollAd() {
+        `when`(mockContentProgressProvider.getContentProgress()).thenReturn(Progress(10000, 10000))
+
+        val answer = Answer { invocation ->
+            val listener = invocation.getArgument<VastAdProvider.Listener>(1)
+            // mimics a vast fetch error callback
+            listener.onVastFetchSuccess(
+                VMAPUtil.createVAST()
+            )
         }
+        doAnswer(answer).`when`(mockNetworkVastAdProvider).getVASTAd(anyObject(), anyObject())
+
+        /** initialise the ad manager **/
+        adManager?.init(
+            mockContentProgressProvider,
+            DefaultAdBreakFinder(),
+            VastAdProviderImpl(mockStringVastAdProvider, mockNetworkVastAdProvider)
+        )
+
+        /** ad event listener is called with LOADED event since we have a post roll ad **/
+        verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
+        assert(adEventCaptor.value.getType() == AdEventType.LOADED)
+        assert(adEventCaptor.value.getAdElement() != null)
+        verify(mockAdPlayer, times(1)).loadAd(anyObject())
     }
 }

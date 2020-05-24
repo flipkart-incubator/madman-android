@@ -19,6 +19,7 @@ import com.flipkart.madman.listener.AdErrorListener
 import com.flipkart.madman.listener.AdEventListener
 import com.flipkart.madman.manager.data.VastAdProvider
 import com.flipkart.madman.manager.finder.AdBreakFinder
+import com.flipkart.madman.manager.tracking.TrackingHandler
 import com.flipkart.madman.provider.ContentProgressProvider
 
 interface AdManager : PlayableAdManager {
@@ -69,4 +70,9 @@ interface AdManager : PlayableAdManager {
      * @param [AdErrorListener] to remove
      */
     fun removeAdErrorListener(listener: AdErrorListener)
+
+    /**
+     * Override the [TrackingHandler]
+     */
+    fun addTrackingHandler(handler: TrackingHandler) {}
 }
