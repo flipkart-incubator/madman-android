@@ -36,6 +36,6 @@ class StringAdLoader(
         onSuccess: (data: VMAPData) -> Unit,
         onFailure: (errorType: AdErrorType, message: String?) -> Unit
     ) {
-        parseResponse(param.response, onSuccess, onFailure)
+        parseResponse(param, param.response, onSuccess, onFailure)
     }
 }

@@ -32,6 +32,7 @@ abstract class BaseAdLoader<T : Request>(
 ) : AdLoader<T> {
 
     protected fun parseResponse(
+        param: Request,
         response: String,
         onSuccess: (data: VMAPData) -> Unit,
         onFailure: (errorType: AdErrorType, message: String?) -> Unit
@@ -39,7 +40,11 @@ abstract class BaseAdLoader<T : Request>(
         parser.parse(response, object : XmlParser.ParserListener<VMAPData> {
             override fun onFailure(type: Int, message: String?) {
                 /** parsing failed **/
-                onFailure(AdErrorType.VMAP_MALFORMED_RESPONSE, message)
+                if (isRequestTypeVMAP(param)) {
+                    onFailure(AdErrorType.VMAP_XML_PARSING_ERROR, message)
+                } else {
+                    onFailure(AdErrorType.VAST_XML_PARSING_ERROR, message)
+                }
             }
 
             override fun onSuccess(t: VMAPData?) {
@@ -50,13 +55,21 @@ abstract class BaseAdLoader<T : Request>(
                         onSuccess(it)
                     } else {
                         /** invalid vmap **/
-                        onFailure(AdErrorType.INVALID_VMAP, result.getMessage())
+                        if (isRequestTypeVMAP(param)) {
+                            onFailure(AdErrorType.VMAP_SCHEMA_VALIDATION_ERROR, result.getMessage())
+                        } else {
+                            onFailure(AdErrorType.VAST_SCHEMA_VALIDATION_ERROR, result.getMessage())
+                        }
                     }
                 } ?: run {
                     /** vmap is empty **/
-                    onFailure(AdErrorType.INVALID_VMAP, Error.VMAP_EMPTY_RESPONSE.errorMessage)
+                    onFailure(AdErrorType.INTERNAL_ERROR, Error.UNIDENTIFIED_ERROR.errorMessage)
                 }
             }
         })
+    }
+
+    protected fun isRequestTypeVMAP(request: Request): Boolean {
+        return request.requestType == Request.RequestType.VMAP
     }
 }

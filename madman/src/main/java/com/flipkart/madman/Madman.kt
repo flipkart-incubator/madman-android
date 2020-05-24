@@ -136,7 +136,7 @@ class Madman internal constructor(
             adLoadListener.onAdManagerLoadFailed(
                 AdError(
                     adErrorType,
-                    message ?: Error.UNKNOWN_ERROR.errorMessage
+                    message ?: Error.UNIDENTIFIED_ERROR.errorMessage
                 )
             )
         })

@@ -271,7 +271,7 @@ open class DefaultAdManager(
      * Ad error callback from the player
      */
     override fun onAdErrorCallback() {
-        notifyAndTrackError(AdErrorType.INTERNAL_ERROR)
+        notifyAndTrackError(AdErrorType.AD_ERROR)
         onAdEndedCallback(false)
     }
 

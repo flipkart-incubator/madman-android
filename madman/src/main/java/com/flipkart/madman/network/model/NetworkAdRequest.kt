@@ -18,4 +18,7 @@ package com.flipkart.madman.network.model
 /**
  * Network ad request, contains the url to the source along with the headers
  */
-class NetworkAdRequest(var url: String) : Request
+class NetworkAdRequest(
+    var url: String,
+    override var requestType: Request.RequestType = Request.RequestType.VMAP
+) : Request

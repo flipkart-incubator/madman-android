@@ -86,17 +86,20 @@ class TrackingEventHelper(private var trackingHandler: TrackingHandler) {
         val errorCode = Error.mapErrorTypeToError(error).errorCode
 
         when (error) {
-            AdErrorType.VAST_ERROR, AdErrorType.NO_MEDIA_URL -> {
+            AdErrorType.NO_MEDIA_URL,
+            AdErrorType.NO_AD -> {
                 adTracking?.getVastErrorUrls()?.let {
                     val replacedUrls = replaceWithErrorCode(it, errorCode)
                     track(Tracking.TrackingEvent.ERROR, replacedUrls, adElement)
                 }
             }
-            else -> {
+            AdErrorType.AD_ERROR -> {
                 adTracking?.getAdErrorUrls()?.let {
                     val replacedUrls = replaceWithErrorCode(it, errorCode)
                     track(Tracking.TrackingEvent.ERROR, replacedUrls, adElement)
                 }
+            }
+            else -> {
             }
         }
     }

@@ -38,13 +38,13 @@ class VastAdProviderImpl(
                 else ->
                     /** throw error as ad tag or vast is null **/
                     listener.onVastFetchError(
-                        AdErrorType.NO_AD,
+                        AdErrorType.UNKNOWN_ERROR,
                         "no ad tag uri or vast ad data for $adBreak"
                     )
             }
         } ?: run {
             /** throw error as ad source is null **/
-            listener.onVastFetchError(AdErrorType.NO_AD, "AdSource is null for $adBreak")
+            listener.onVastFetchError(AdErrorType.UNKNOWN_ERROR, "AdSource is null for $adBreak")
         }
     }
 }

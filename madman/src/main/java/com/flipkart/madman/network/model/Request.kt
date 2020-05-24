@@ -18,4 +18,10 @@ package com.flipkart.madman.network.model
 /**
  * A plain request with headers
  */
-interface Request
+interface Request {
+    var requestType: RequestType
+
+    enum class RequestType {
+        VMAP, VAST
+    }
+}
