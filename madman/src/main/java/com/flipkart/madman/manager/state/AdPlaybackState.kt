@@ -38,7 +38,7 @@ class AdPlaybackState(private val adBreaks: List<AdBreak>) {
     private var adState: AdState = AdState.INIT
 
     enum class AdState {
-        INIT, STARTED, PLAYING, PAUSED, ENDED;
+        INIT, STARTED, PLAYING, PAUSED, SKIPPED, ENDED;
     }
 
     inner class AdGroup(
@@ -160,6 +160,10 @@ class AdPlaybackState(private val adBreaks: List<AdBreak>) {
 
     fun isAdPaused(): Boolean {
         return adState == AdState.PAUSED
+    }
+
+    fun isAdSkipped(): Boolean {
+        return adState == AdState.SKIPPED
     }
 
     fun hasAdEnded(): Boolean {

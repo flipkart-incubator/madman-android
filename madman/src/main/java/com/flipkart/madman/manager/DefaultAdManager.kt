@@ -103,7 +103,7 @@ open class DefaultAdManager(
     }
 
     /**
-     * Gets called every x seconds by [ContentProgressHandler]
+     * Gets called every x seconds by [ProgressHandler]
      *
      * Provides the progress of the media running.
      * This is the place where the decision logic of which ad break to play happens
@@ -162,7 +162,7 @@ open class DefaultAdManager(
     }
 
     /**
-     * Gets called every x seconds by [AdProgressHandler]
+     * Gets called every x seconds by [ProgressHandler]
      *
      * Provides the progress of the ad running. Returns [Progress.UNDEFINED] till the ad starts playing
      */
@@ -211,9 +211,11 @@ open class DefaultAdManager(
                 }
             }
             /**
-             * if the ad state is [AdPlaybackState.AdState.ENDED], stop the ad and load the next ad break in same ad group if present
+             * if the ad state is [AdPlaybackState.AdState.ENDED] or [AdPlaybackState.AdState.SKIPPED],
+             * stop the ad and load the next ad break in same ad group if present
              */
-            adPlaybackState.hasAdEnded() -> {
+            adPlaybackState.hasAdEnded() || adPlaybackState.isAdSkipped() -> {
+                val wasAdSkipped = adPlaybackState.isAdSkipped()
                 updateAdState(AdPlaybackState.AdState.INIT)
                 previousAdProgress = Progress.UNDEFINED
 
@@ -221,7 +223,9 @@ open class DefaultAdManager(
                     updateAdBreakState(AdBreak.AdBreakState.PLAYED)
                     it.onAdBreakComplete()
                     notifyAndTrackEvent(Event.AD_STOPPED)
-                    notifyAndTrackEvent(Event.AD_COMPLETED)
+                    if (!wasAdSkipped) {
+                        notifyAndTrackEvent(Event.AD_COMPLETED)
+                    }
                     removeAdMessageHandler()
 
                     if (it.hasMoreAdBreaksInAdGroup()) {
@@ -266,8 +270,12 @@ open class DefaultAdManager(
      * Ad ended callback from the player.
      * Remove the ad message handlers and update the state
      */
-    override fun onAdEndedCallback() {
-        updateAdState(AdPlaybackState.AdState.ENDED)
+    override fun onAdEndedCallback(skipped: Boolean) {
+        if (skipped) {
+            updateAdState(AdPlaybackState.AdState.SKIPPED)
+        } else {
+            updateAdState(AdPlaybackState.AdState.ENDED)
+        }
         adRenderer.removeView()
     }
 
@@ -276,7 +284,7 @@ open class DefaultAdManager(
      */
     override fun onAdErrorCallback() {
         notifyAndTrackEvent(Event.AD_ERROR)
-        onAdEndedCallback()
+        onAdEndedCallback(false)
     }
 
     /**
@@ -298,7 +306,7 @@ open class DefaultAdManager(
      */
     override fun onSkipAdClick() {
         notifyAndTrackEvent(Event.AD_SKIPPED)
-        onAdEndedCallback()
+        onAdEndedCallback(true)
     }
 
     /**

@@ -53,8 +53,6 @@ class MadmanPlayerManager(
     ) {
         // Create a player instance.
         player = ExoPlayerFactory.newSimpleInstance(context)
-        player?.addAnalyticsListener(EventLogger(null))
-
         adsLoader?.setPlayer(player)
         playerView?.player = player
 
