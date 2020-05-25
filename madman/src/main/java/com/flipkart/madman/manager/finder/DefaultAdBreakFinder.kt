@@ -44,7 +44,7 @@ import com.flipkart.madman.manager.helper.Constant
  *
  * So, if the [scanForAdBreak] returns true which means the scrubber position has changed, calculate the new previous and next cue point index.
  *
- * The caller has to call the [findPlayableAdBreak] to fetch the next ad break
+ * The caller has to call the [findPlayableAdBreaks] to fetch the next ad break
  */
 class DefaultAdBreakFinder : AdBreakFinder {
     /**
@@ -69,21 +69,27 @@ class DefaultAdBreakFinder : AdBreakFinder {
      */
     private var nextCuePoint: Float = -1F
 
-    override fun findPlayableAdBreak(
+    override fun findPlayableAdBreaks(
         currentPosition: Float,
         contentStartPosition: Float,
         contentDuration: Float,
-        adBreakList: List<AdBreak>
-    ): AdBreak? {
-        var adBreak: AdBreak? = null
+        adBreakList: List<AdBreak>,
+        isContentCompleted: Boolean
+    ): List<AdBreak> {
+        val adBreaks = mutableListOf<AdBreak>()
 
         /**
          * If position has changed, do a linear search to find out previous and next cue point index, and update accordingly
          */
-        if (scanForAdBreak(currentPosition, adBreakList)) {
-            previousCuePointIndex = getAdBreakIndexForPosition(currentPosition, adBreakList)
-            nextCuePointIndex =
-                if (previousCuePointIndex < adBreakList.size - 1) previousCuePointIndex + 1 else Constant.INDEX_UNSET
+        if (scanForAdBreak(currentPosition)) {
+            if (!isContentCompleted) {
+                previousCuePointIndex = getAdBreakIndexForPosition(currentPosition, adBreakList)
+                nextCuePointIndex =
+                    if (previousCuePointIndex < adBreakList.size - 1) previousCuePointIndex + 1 else Constant.INDEX_UNSET
+            } else {
+                previousCuePointIndex = adBreakList.size - 1
+                nextCuePointIndex = adBreakList.size - 1
+            }
             LogUtil.log("[DefaultAdBreakFinder] progress position changed $currentPosition, new previous point at $previousCuePointIndex, new next point at $nextCuePointIndex")
         }
 
@@ -101,36 +107,36 @@ class DefaultAdBreakFinder : AdBreakFinder {
             if (nextCuePointIndex != Constant.INDEX_UNSET) adBreakList[nextCuePointIndex].timeOffsetInSec else contentDuration
 
         /**
-         * Check if next ad break can be played ie only play if not already played
-         */
-        try {
-            val nextAdBreak = adBreakList.first { it.timeOffsetInSec == nextCuePoint }
-            if (nextAdBreak.state != AdBreak.AdBreakState.PLAYED && nextAdBreak.state != AdBreak.AdBreakState.SKIPPED) {
-                LogUtil.log("[DefaultAdBreakFinder] next ad break ${nextAdBreak.timeOffsetInSec}")
-                adBreak = nextAdBreak
-            }
-        } catch (e: NoSuchElementException) {
-        }
-
-        /**
          * Check if previous ad break can be played ie only play if not already played.
          * If yes, return the previous ad break
          */
-        try {
-            val previousAdBreak = adBreakList.first { it.timeOffsetInSec == previousCuePoint }
-            if (previousAdBreak.state != AdBreak.AdBreakState.PLAYED && previousAdBreak.state != AdBreak.AdBreakState.SKIPPED) {
+        val previousAdBreaks = adBreakList.filter { it.timeOffsetInSec == previousCuePoint }
+        previousAdBreaks.forEach { previousAdBreak ->
+            if (previousAdBreak.state != AdBreak.AdBreakState.PLAYED) {
                 LogUtil.log("[DefaultAdBreakFinder] playing previous ad break ${previousAdBreak.timeOffsetInSec}")
-                adBreak = previousAdBreak
+                adBreaks.add(previousAdBreak)
             }
-        } catch (e: NoSuchElementException) {
+        }
+        if (adBreaks.isNotEmpty()) {
+            return adBreaks
         }
 
-        return adBreak
+        /**
+         * Check if next ad break can be played ie only play if not already played
+         */
+        val nextAdBreaks = adBreakList.filter { it.timeOffsetInSec == nextCuePoint }
+        nextAdBreaks.forEach { nextAdBreak ->
+            if (nextAdBreak.state != AdBreak.AdBreakState.PLAYED) {
+                LogUtil.log("[DefaultAdBreakFinder] next ad break ${nextAdBreak.timeOffsetInSec}")
+                adBreaks.add(nextAdBreak)
+            }
+        }
+
+        return adBreaks
     }
 
     override fun scanForAdBreak(
-        currentPosition: Float,
-        adBreakList: List<AdBreak>
+        currentPosition: Float
     ): Boolean {
         return hasPositionChanged(
             previousCuePoint,
@@ -149,7 +155,7 @@ class DefaultAdBreakFinder : AdBreakFinder {
         nextCuePoint: Float,
         currentPosition: Float
     ): Boolean {
-        return currentPosition > 0 && ((currentPosition < nextCuePoint && currentPosition < previousCuePoint) || (currentPosition > nextCuePoint && currentPosition > previousCuePoint))
+        return ((currentPosition < nextCuePoint && currentPosition < previousCuePoint) || (currentPosition > nextCuePoint && currentPosition > previousCuePoint))
     }
 
     /**

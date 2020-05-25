@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.flipkart.madman.component.enums
+package com.flipkart.madman.manager.handler
 
-object StringErrorConstants {
-    const val STRING_REQUEST_MALFORMED = "response cannot be empty"
-    const val NETWORK_REQUEST_MALFORMED = "url cannot be empty"
-    const val EMPTY_VMAP = "VMAP data cannot be null"
-    const val NO_MEDIA_URL = "No media url available"
-    const val GENERIC_ERROR = "Something went wrong"
+import com.flipkart.madman.provider.Progress
+
+interface ContentProgressUpdateListener {
+    fun onContentProgressUpdate(progress: Progress)
 }

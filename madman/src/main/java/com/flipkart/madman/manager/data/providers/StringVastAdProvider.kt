@@ -30,10 +30,10 @@ class StringVastAdProvider : VastAdProvider {
             if (it.ads?.isNotEmpty() == true) {
                 listener.onVastFetchSuccess(it)
             } else {
-                listener.onVastFetchError(AdErrorType.VAST_ERROR, "No ad to play for $adBreak")
+                listener.onVastFetchError(AdErrorType.NO_AD, "No ad to play for $adBreak")
             }
         } ?: run {
-            listener.onVastFetchError(AdErrorType.VAST_ERROR, "No vast ad to play for $adBreak")
+            listener.onVastFetchError(AdErrorType.UNKNOWN_ERROR, "No vast ad to play for $adBreak")
         }
     }
 }

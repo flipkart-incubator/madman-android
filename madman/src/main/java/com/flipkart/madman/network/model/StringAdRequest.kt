@@ -18,6 +18,7 @@ package com.flipkart.madman.network.model
 /**
  * String ad request, response is already present
  */
-class StringAdRequest : Request {
-    var response: String? = null
-}
+class StringAdRequest(
+    var response: String,
+    override var requestType: Request.RequestType = Request.RequestType.VMAP
+) : Request

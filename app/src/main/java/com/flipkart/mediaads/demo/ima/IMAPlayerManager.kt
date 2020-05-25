@@ -33,7 +33,9 @@ import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
+import com.google.android.exoplayer2.util.EventLogger
 import com.google.android.exoplayer2.util.Util
+
 
 class IMAPlayerManager(
     context: Context,
@@ -50,6 +52,7 @@ class IMAPlayerManager(
         playerView: PlayerView?
     ) { // Create a player instance.
         player = ExoPlayerFactory.newSimpleInstance(context)
+        player?.addAnalyticsListener(EventLogger(null))
         adsLoader.setPlayer(player)
         playerView?.player = player
 
@@ -119,10 +122,13 @@ class IMAPlayerManager(
         adsLoader = if (!TextUtils.isEmpty(url)) {
             builder.buildForAdTag(Uri.parse(url))
         } else {
-            val stringResponse = response ?: Utils.readFromAssets(
-                context,
-                "ad_response.xml"
-            )
+            var stringResponse = response ?: ""
+            if (TextUtils.isEmpty(stringResponse)) {
+                stringResponse = Utils.readFromAssets(
+                    context,
+                    "ad_response.xml"
+                )
+            }
             builder.buildForAdsResponse(stringResponse)
         }
         dataSourceFactory = DefaultDataSourceFactory(

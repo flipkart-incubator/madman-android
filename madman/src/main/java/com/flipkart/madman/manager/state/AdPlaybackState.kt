@@ -17,44 +17,68 @@ package com.flipkart.madman.manager.state
 
 import com.flipkart.madman.component.model.vast.VASTData
 import com.flipkart.madman.component.model.vmap.AdBreak
-import com.flipkart.madman.component.model.vmap.VMAPData
 import com.flipkart.madman.manager.data.helper.AdDataHelper
 import com.flipkart.madman.manager.finder.AdBreakFinder
 import com.flipkart.madman.manager.model.VastAd
+import java.util.*
 
 /**
  * Maintains the state of the ad playback
  */
-class AdPlaybackState {
-
+class AdPlaybackState(private val adBreaks: List<AdBreak>) {
+    /** indicates that the duration of content is set or not **/
     private var durationSet: Boolean = false
+    /** indicates the start position of the content, default is 0, non 0 value for continue watching cases **/
+    private var contentStartPosition: Float = 0F
+    /** indicates if the content has completed **/
+    private var contentCompleted: Boolean = false
+    /** currently playing ad group **/
+    private var playableAdGroup: AdGroup? = null
+    /** indicates the ad state **/
+    private var adState: AdState = AdState.INIT
 
-    private var startPosition: Float = 0F
+    enum class AdState {
+        INIT, STARTED, PLAYING, PAUSED, SKIPPED, ENDED;
+    }
 
-    /** list of all ad breaks **/
-    private var adBreakList: List<AdBreak> = emptyList()
+    inner class AdGroup(
+        private val adBreaksInGroup: List<AdBreak>,
+        private val adBreakQueue: Queue<AdBreak> = ArrayDeque(adBreaksInGroup),
+        private val count: Int = adBreaksInGroup.size
+    ) {
+        fun getAdBreak(): AdBreak {
+            return adBreakQueue.element()
+        }
 
-    /** current ad break to play **/
-    private var adBreakToPlay: AdBreak? = null
+        fun getVastAd(vastData: VASTData): VastAd? {
+            val adBreak = getAdBreak()
+            adBreak.adSource?.vastAdData = vastData
+            return AdDataHelper.createAdFor(
+                adBreak,
+                adBreaksInGroup.indexOf(adBreak),
+                count
+            )
+        }
 
-    /** current ad to play from the ad break **/
-    private var adToPlay: VastAd? = null
+        fun updateAdBreakState(state: AdBreak.AdBreakState) {
+            getAdBreak().state = state
+            adBreaks[adBreaks.indexOf(getAdBreak())].state = state
+        }
 
-    /** if the ad is playing **/
-    var isAdPlaying: Boolean = false
+        fun onAdBreakComplete() {
+            try {
+                adBreakQueue.remove()
+            } catch (e: NoSuchElementException) {
+            }
+        }
 
-    /** if the ad has been paused (if was playing before) **/
-    var isAdPaused: Boolean = false
+        fun hasMoreAdBreaksInAdGroup(): Boolean {
+            return adBreakQueue.isNotEmpty()
+        }
 
-    /** if the content has completed **/
-    var contentCompleted: Boolean = false
-
-    /**
-     * Initialise the [AdPlaybackState] with the [VMAPData]
-     */
-    fun withData(data: VMAPData): AdPlaybackState {
-        adBreakList = data.adBreaks ?: emptyList()
-        return this
+        fun hasNextAdBreakInAdGroup(): Boolean {
+            return adBreakQueue.size - 1 > 0
+        }
     }
 
     /**
@@ -65,8 +89,8 @@ class AdPlaybackState {
      */
     fun withContentProgress(currentTime: Float, duration: Float): AdPlaybackState {
         if (duration > 0 && !durationSet) {
-            startPosition = currentTime
-            adBreakList.forEach {
+            contentStartPosition = currentTime
+            adBreaks.forEach {
                 if (it.timeOffset == AdBreak.TimeOffsetTypes.END) {
                     it.timeOffsetInSec = duration
                 }
@@ -79,74 +103,79 @@ class AdPlaybackState {
     /**
      * This is called in a handler to fetch the next playable ad break.
      */
-    fun getPlayableAdBreak(
+    fun findPlayableAdGroup(
         currentPosition: Float,
         duration: Float,
         adBreakFinder: AdBreakFinder
-    ): AdBreak? {
+    ) {
         /**
          * If the ad break is null, or the scan for ad break returns true (ie the position had moved(
          * and the ad is not playing
          */
-        if ((adBreakToPlay == null || adBreakFinder.scanForAdBreak(currentPosition, adBreakList))
-            && !isAdPlaying
-        ) {
-            /**
-             * get the playable ad break from [AdBreakFinder]
-             */
-            adBreakToPlay =
-                adBreakFinder.findPlayableAdBreak(
-                    currentPosition,
-                    startPosition,
-                    duration,
-                    adBreakList
-                )
+        val scanForAdBreak = adBreakFinder.scanForAdBreak(currentPosition)
+        if (playableAdGroup == null || scanForAdBreak) {
+            val playableAdBreaks = adBreakFinder.findPlayableAdBreaks(
+                currentPosition,
+                contentStartPosition,
+                duration,
+                adBreaks,
+                contentCompleted
+            )
+            playableAdGroup = if (playableAdBreaks.isNotEmpty()) {
+                AdGroup(playableAdBreaks)
+            } else {
+                null
+            }
         }
-        return adBreakToPlay
+    }
+
+    fun getAdGroup(): AdGroup? {
+        return playableAdGroup
+    }
+
+    fun onAdGroupComplete() {
+        playableAdGroup = null
     }
 
     fun isPostRollPlayed(): Boolean {
-        return adBreakList.find { it.timeOffset == AdBreak.TimeOffsetTypes.END && it.state != AdBreak.AdBreakState.PLAYED && it.state != AdBreak.AdBreakState.SKIPPED } == null
+        return adBreaks.find { it.timeOffset == AdBreak.TimeOffsetTypes.END && it.state != AdBreak.AdBreakState.PLAYED } == null
     }
 
     /**
-     * update the state of the current ad break
+     * called when the content has ended. The plugin notifies when the content has ended
      */
-    fun updateStateForAdBreak(state: AdBreak.AdBreakState) {
-        adBreakToPlay?.state = state
-    }
-
-    /**
-     * once the ad break is completed, reset the states
-     */
-    fun markAdBreakAsCompleted() {
-        adBreakToPlay = null
-        adToPlay = null
-        isAdPlaying = false
-    }
-
-    /**
-     * once the ad break is completed, reset the states
-     */
-    fun markAdBreakAsPlaying() {
-        isAdPlaying = true
-    }
-
-    /**
-     * mark content completed
-     */
-    fun markContentCompleted() {
+    fun contentCompleted() {
         contentCompleted = true
     }
 
-    fun getAdFrom(vastData: VASTData): VastAd? {
-        adToPlay = adBreakToPlay?.let {
-            return AdDataHelper.createAdFor(
-                it,
-                vastData,
-                it.podIndex
-            )
-        }
-        return adToPlay
+    /**
+     * if the content is completed
+     */
+    fun hasContentCompleted(): Boolean {
+        return contentCompleted
+    }
+
+    fun isAdPlaying(): Boolean {
+        return adState == AdState.PLAYING
+    }
+
+    fun isAdPaused(): Boolean {
+        return adState == AdState.PAUSED
+    }
+
+    fun isAdSkipped(): Boolean {
+        return adState == AdState.SKIPPED
+    }
+
+    fun hasAdEnded(): Boolean {
+        return adState == AdState.ENDED
+    }
+
+    fun hasAdStarted(): Boolean {
+        return adState == AdState.STARTED
+    }
+
+    fun updateAdState(state: AdState) {
+        adState = state
     }
 }

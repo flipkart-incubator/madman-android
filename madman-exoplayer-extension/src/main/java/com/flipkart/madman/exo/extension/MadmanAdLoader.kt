@@ -77,7 +77,9 @@ class MadmanAdLoader private constructor(
     context: Context,
     networkLayer: NetworkLayer,
     private val adTagUri: Uri?,
-    private val adsResponse: String?
+    private val adsResponse: String?,
+    private val adEventListener: AdEventListener?,
+    private val adErrorListener: AdErrorListener?
 ) : Player.EventListener, AdsLoader, AdPlayer, ContentProgressProvider, AdErrorListener,
     AdLoadListener, AdEventListener {
     private var debug = true
@@ -167,6 +169,19 @@ class MadmanAdLoader private constructor(
      */
         (private val context: Context, private val networkLayer: NetworkLayer) {
 
+        private var adEventListener: AdEventListener? = null
+        private var adErrorListener: AdErrorListener? = null
+
+        fun setAdEventListener(listener: AdEventListener): Builder {
+            this.adEventListener = listener
+            return this
+        }
+
+        fun setAdErrorListener(listener: AdErrorListener): Builder {
+            this.adErrorListener = listener
+            return this
+        }
+
         /**
          * Returns a new [MadmanAdLoader] for the specified ad tag.
          *
@@ -180,7 +195,9 @@ class MadmanAdLoader private constructor(
                 context,
                 networkLayer,
                 adTagUri,
-                null
+                null,
+                adEventListener,
+                adErrorListener
             )
         }
 
@@ -196,7 +213,9 @@ class MadmanAdLoader private constructor(
                 context,
                 networkLayer,
                 null,
-                adsResponse
+                adsResponse,
+                adEventListener,
+                adErrorListener
             )
         }
     }
@@ -215,8 +234,6 @@ class MadmanAdLoader private constructor(
         adCallbacks = ArrayList(/* initialCapacity= */1)
 
         madman = Madman.Builder()
-            .setAdErrorListener(this)
-            .setAdEventListener(this)
             .setAdLoadListener(this)
             .setNetworkLayer(networkLayer)
             .build(context)
@@ -249,12 +266,10 @@ class MadmanAdLoader private constructor(
             DefaultAdRenderer.Builder().setPlayer(this).setContainer(adViewGroup).build(null)
 
         if (adTagUri != null) {
-            val request = NetworkAdRequest()
-            request.url = adTagUri.toString()
+            val request = NetworkAdRequest(adTagUri.toString())
             madman.requestAds(request, adRenderer)
         } else {
-            val request = StringAdRequest()
-            request.response = adsResponse
+            val request = StringAdRequest(adsResponse ?: "")
             madman.requestAds(request, adRenderer)
         }
     }
@@ -360,6 +375,14 @@ class MadmanAdLoader private constructor(
     override fun onAdManagerLoaded(manager: AdManager) {
         pendingAdRequestContext = null
         this.adsManager = manager
+        this.adsManager?.addAdEventListener(this)
+        this.adsManager?.addAdErrorListener(this)
+        if (adEventListener != null) {
+            this.adsManager?.addAdEventListener(adEventListener)
+        }
+        if (adErrorListener != null) {
+            this.adsManager?.addAdErrorListener(adErrorListener)
+        }
         if (player != null) {
             // If a player is attached already, start playback immediately.
             try {
@@ -368,6 +391,10 @@ class MadmanAdLoader private constructor(
                 maybeNotifyInternalError("onAdManagerLoaded", e)
             }
         }
+    }
+
+    override fun onAdManagerLoadFailed(error: AdErrorListener.AdError) {
+        onAdError(error)
     }
 
     // AdEvent.AdEventListener implementation.
@@ -416,31 +443,35 @@ class MadmanAdLoader private constructor(
         if (player == null) {
             return lastContentProgress ?: Progress.UNDEFINED
         }
-        val hasContentDuration = contentDurationMs != C.TIME_UNSET
+        val hasContentDuration =
+            contentDurationMs != C.TIME_UNSET
         val contentPositionMs: Long
         if (pendingContentPositionMs != C.TIME_UNSET) {
             sentPendingContentPositionMs = true
             contentPositionMs = pendingContentPositionMs
-            expectedAdGroupIndex =
-                adPlaybackState.getAdGroupIndexForPositionUs(C.msToUs(contentPositionMs))
+            expectedAdGroupIndex = adPlaybackState.getAdGroupIndexForPositionUs(
+                C.msToUs(contentPositionMs)
+            )
         } else if (fakeContentProgressElapsedRealtimeMs != C.TIME_UNSET) {
             val elapsedSinceEndMs =
                 SystemClock.elapsedRealtime() - fakeContentProgressElapsedRealtimeMs
             contentPositionMs = fakeContentProgressOffsetMs + elapsedSinceEndMs
-            expectedAdGroupIndex =
-                adPlaybackState.getAdGroupIndexForPositionUs(C.msToUs(contentPositionMs))
-        } else if (sentContentComplete) {
-            contentPositionMs = this.contentDurationMs
+            expectedAdGroupIndex = adPlaybackState.getAdGroupIndexForPositionUs(
+                C.msToUs(contentPositionMs)
+            )
         } else if (adState == AD_STATE_NONE && !playingAd && hasContentDuration) {
             contentPositionMs = player?.currentPosition ?: 0
             // Update the expected ad group index for the current content position. The update is delayed
-            // until MAXIMUM_PRELOAD_DURATION_MS before the ad so that an ad group load error delivered
-            // just after an ad group isn't incorrectly attributed to the next ad group.
+// until MAXIMUM_PRELOAD_DURATION_MS before the ad so that an ad group load error delivered
+// just after an ad group isn't incorrectly attributed to the next ad group.
             val nextAdGroupIndex = adPlaybackState.getAdGroupIndexAfterPositionUs(
-                C.msToUs(contentPositionMs), C.msToUs(contentDurationMs)
+                C.msToUs(contentPositionMs),
+                C.msToUs(contentDurationMs)
             )
             if (nextAdGroupIndex != expectedAdGroupIndex && nextAdGroupIndex != C.INDEX_UNSET) {
-                var nextAdGroupTimeMs = C.usToMs(adPlaybackState.adGroupTimesUs[nextAdGroupIndex])
+                var nextAdGroupTimeMs = C.usToMs(
+                    adPlaybackState.adGroupTimesUs[nextAdGroupIndex]
+                )
                 if (nextAdGroupTimeMs == C.TIME_END_OF_SOURCE) {
                     nextAdGroupTimeMs = contentDurationMs
                 }
@@ -449,11 +480,10 @@ class MadmanAdLoader private constructor(
                 }
             }
         } else {
-            return Progress(-1, -1)
+            return Progress.UNDEFINED
         }
         val contentDurationMs =
-            if (hasContentDuration) this.contentDurationMs else DURATION_UNSET
-
+            if (hasContentDuration) contentDurationMs else DURATION_UNSET
         return Progress(contentPositionMs, contentDurationMs)
     }
 
@@ -647,6 +677,10 @@ class MadmanAdLoader private constructor(
     }
 
     override fun onPositionDiscontinuity(@Player.DiscontinuityReason reason: Int) {
+        Log.d(
+            TAG,
+            "onTimelineChanged/onPositionDiscontinuity"
+        )
         if (adsManager == null) {
             return
         }
@@ -953,7 +987,7 @@ class MadmanAdLoader private constructor(
     private fun getAdIndexInAdGroupToLoad(adGroupIndex: Int): Int {
         @AdState val states = adPlaybackState.adGroups?.get(adGroupIndex)?.states ?: IntArray(0)
         var adIndexInAdGroup = 0
-        while ((adIndexInAdGroup < states.size && states[adIndexInAdGroup] != AdPlaybackState.AD_STATE_UNAVAILABLE)) {
+        while (adIndexInAdGroup < states.size && states[adIndexInAdGroup] != AdPlaybackState.AD_STATE_UNAVAILABLE) {
             adIndexInAdGroup++
         }
         return if (adIndexInAdGroup == states.size) C.INDEX_UNSET else adIndexInAdGroup

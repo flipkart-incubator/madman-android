@@ -13,10 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.flipkart.madman.helper
+package com.flipkart.madman.network.helper
 
-object Precondition {
-    fun checkNonNull(arg: Any?, message: String) {
-        requireNotNull(arg) { message }
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [21])
+class UtilTest {
+    @Test
+    fun testLocale() {
+        val language = Util.getLanguage()
+        assert(language == "en")
+    }
+
+    @Test
+    fun testUserAgent() {
+        val userAgent = Util.getUserAgent(RuntimeEnvironment.application)
+        assert(userAgent.isNotEmpty())
     }
 }

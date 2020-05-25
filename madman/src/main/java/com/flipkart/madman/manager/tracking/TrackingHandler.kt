@@ -16,12 +16,11 @@
 package com.flipkart.madman.manager.tracking
 
 import com.flipkart.madman.component.model.common.Tracking
+import com.flipkart.madman.manager.model.AdElement
 
 /**
  * Tracking handler
  */
 interface TrackingHandler {
-    fun trackEvent(event: Tracking.TrackingEvent, urlList: List<String>?)
-
-    fun trackEvent(url: String?)
+    fun trackEvent(urls: List<String>, event: Tracking.TrackingEvent?, forAd: AdElement?)
 }

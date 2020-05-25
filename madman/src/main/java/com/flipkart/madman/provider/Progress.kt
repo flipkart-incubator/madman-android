@@ -19,8 +19,8 @@ package com.flipkart.madman.provider
  * returns the current time and the duration of the media (ads or content)
  */
 class Progress(currentTimeInMs: Long, durationInMs: Long) {
-    var currentTime: Float = currentTimeInMs / 1000.0F
-    var duration: Float = durationInMs / 1000.0F
+    var currentTime: Float = currentTimeInMs / 1000.0F // in sec
+    var duration: Float = durationInMs / 1000.0F // in sec
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

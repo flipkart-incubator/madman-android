@@ -17,6 +17,7 @@
 package com.flipkart.madman.manager.handler
 
 import com.flipkart.madman.provider.AdProgressProvider
+import com.flipkart.madman.provider.ContentProgressProvider
 import com.flipkart.madman.provider.Progress
 import com.flipkart.madman.testutils.anyObject
 import org.junit.Before
@@ -40,7 +41,10 @@ class AdProgressHandlerTest {
     private lateinit var adProgressProvider: AdProgressProvider
 
     @Mock
-    private lateinit var progressUpdateListener: AdProgressHandler.AdProgressUpdateListener
+    private lateinit var contentProgressProvider: ContentProgressProvider
+
+    @Mock
+    private lateinit var progressUpdateListener: AdProgressUpdateListener
 
     @Before
     fun setUp() {
@@ -52,42 +56,42 @@ class AdProgressHandlerTest {
      */
     @Test
     fun testListenerIsCalledOnProgressUpdate() {
-        val progressHandler = AdProgressHandler(adProgressProvider)
-        progressHandler.setListener(progressUpdateListener)
+        val progressHandler = ProgressHandler(contentProgressProvider, adProgressProvider, null)
+        progressHandler.setAdProgressListener(progressUpdateListener)
 
         `when`(adProgressProvider.getAdProgress()).thenReturn(Progress(10, 200))
 
-        progressHandler.sendMessage()
+        progressHandler.sendMessageFor(ProgressHandler.MessageCode.AD_MESSAGE)
         /** verify listener is called once **/
         verify(progressUpdateListener, times(1)).onAdProgressUpdate(anyObject())
 
         reset(progressUpdateListener)
 
-        progressHandler.sendMessage()
-        progressHandler.sendMessage()
-        progressHandler.sendMessage()
+        progressHandler.sendMessageFor(ProgressHandler.MessageCode.AD_MESSAGE)
+        progressHandler.sendMessageFor(ProgressHandler.MessageCode.AD_MESSAGE)
+        progressHandler.sendMessageFor(ProgressHandler.MessageCode.AD_MESSAGE)
         /** verify listener is called thrice **/
         verify(progressUpdateListener, times(3)).onAdProgressUpdate(anyObject())
 
         reset(progressUpdateListener)
 
-        progressHandler.removeListener(progressUpdateListener)
-        progressHandler.sendMessage()
+        progressHandler.removeAdProgressListeners()
+        progressHandler.sendMessageFor(ProgressHandler.MessageCode.AD_MESSAGE)
         /** verify listener is not called as not listeners attached **/
         verify(progressUpdateListener, times(0)).onAdProgressUpdate(anyObject())
 
         reset(progressUpdateListener)
 
-        progressHandler.setListener(progressUpdateListener)
-        progressHandler.removeMessages()
-        progressHandler.sendMessage()
+        progressHandler.setAdProgressListener(progressUpdateListener)
+        progressHandler.removeMessagesFor(ProgressHandler.MessageCode.AD_MESSAGE)
+        progressHandler.sendMessageFor(ProgressHandler.MessageCode.AD_MESSAGE)
         /** verify listener is called once **/
         verify(progressUpdateListener, times(1)).onAdProgressUpdate(anyObject())
 
         reset(progressUpdateListener)
 
-        progressHandler.sendMessage()
-        progressHandler.removeMessages()
+        progressHandler.sendMessageFor(ProgressHandler.MessageCode.AD_MESSAGE)
+        progressHandler.removeMessagesFor(ProgressHandler.MessageCode.AD_MESSAGE)
         /** verify listener is called once **/
         verify(progressUpdateListener, times(1)).onAdProgressUpdate(anyObject())
     }

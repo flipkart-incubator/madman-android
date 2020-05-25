@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.flipkart.madman.network.model
+package com.flipkart.madman.manager.handler
 
-/**
- * A plain request with headers
- */
-interface Request {
-    var requestType: RequestType
+import com.flipkart.madman.provider.Progress
 
-    enum class RequestType {
-        VMAP, VAST
-    }
+interface AdProgressUpdateListener {
+    fun onAdProgressUpdate(progress: Progress)
 }

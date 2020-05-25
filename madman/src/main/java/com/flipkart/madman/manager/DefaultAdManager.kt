@@ -16,107 +16,87 @@
 package com.flipkart.madman.manager
 
 import com.flipkart.madman.component.enums.AdErrorType
-import com.flipkart.madman.component.enums.StringErrorConstants
-import com.flipkart.madman.component.enums.VastErrors
 import com.flipkart.madman.component.model.vast.VASTData
 import com.flipkart.madman.component.model.vmap.AdBreak
 import com.flipkart.madman.component.model.vmap.VMAPData
-import com.flipkart.madman.listener.AdErrorListener
-import com.flipkart.madman.listener.AdEventListener
-import com.flipkart.madman.listener.impl.AdError
-import com.flipkart.madman.loader.AdLoader
 import com.flipkart.madman.logger.LogUtil
 import com.flipkart.madman.manager.data.VastAdProvider
 import com.flipkart.madman.manager.data.helper.AdDataHelper
+import com.flipkart.madman.manager.event.Error
 import com.flipkart.madman.manager.event.Event
-import com.flipkart.madman.manager.handler.AdProgressHandler
-import com.flipkart.madman.manager.handler.ContentProgressHandler
+import com.flipkart.madman.manager.handler.ProgressHandler
 import com.flipkart.madman.manager.helper.Constant.FIRST_QUARTILE
 import com.flipkart.madman.manager.helper.Constant.MIDPOINT
 import com.flipkart.madman.manager.helper.Constant.THIRD_QUARTILE
+import com.flipkart.madman.manager.model.VastAd
+import com.flipkart.madman.manager.state.AdPlaybackState
 import com.flipkart.madman.network.NetworkLayer
-import com.flipkart.madman.network.model.NetworkAdRequest
-import com.flipkart.madman.provider.ContentProgressProvider
+import com.flipkart.madman.parser.XmlParser
 import com.flipkart.madman.provider.Progress
 import com.flipkart.madman.renderer.AdRenderer
 import com.flipkart.madman.renderer.callback.ViewClickListener
-import com.flipkart.madman.renderer.settings.RenderingSettings
-import kotlin.math.ceil
+import com.flipkart.madman.validator.XmlValidator
 
 /**
  * Core part of Madman
  */
 open class DefaultAdManager(
     private val data: VMAPData,
-    adLoader: AdLoader<NetworkAdRequest>,
     networkLayer: NetworkLayer,
-    private val adRenderer: AdRenderer,
-    adEventListener: AdEventListener,
-    private val adErrorListener: AdErrorListener
-) : BaseAdManager(data, adRenderer, adLoader, networkLayer, adEventListener),
-    VastAdProvider.Listener, AdProgressHandler.AdProgressUpdateListener, ViewClickListener {
-
-    /** ad rendering settings **/
-    private val adRenderingSettings: RenderingSettings by lazy {
-        adRenderer.getRenderingSettings()
-    }
+    xmlParser: XmlParser,
+    xmlValidator: XmlValidator,
+    private val adRenderer: AdRenderer
+) : BaseAdManager(data, adRenderer, networkLayer, xmlParser, xmlValidator), ViewClickListener {
 
     /** list of all cue points **/
     private val adCuePoints: List<Float> by lazy {
         AdDataHelper.getCuePoints(data)
     }
 
-    /** last ad progress percentage **/
-    private var lastAdProgressPercentage: Float = 0F
+    /** previous ad progress **/
+    var previousAdProgress: Progress = Progress.UNDEFINED
+
+    private var currentAd: VastAd? = null
 
     override fun getCuePoints(): List<Float> {
         return adCuePoints
     }
 
-    override fun init(contentProgressProvider: ContentProgressProvider) {
-        super.init(contentProgressProvider)
+    override fun init() {
         adRenderer.registerViewClickListener(this)
-    }
-
-    /**
-     * Gets called when the media is ready
-     * ie the media progress is not [Progress.UNDEFINED]
-     */
-    override fun onInit() {
         if (AdDataHelper.hasPreRollAds(data)) {
             LogUtil.log("pre-roll ads present")
         } else {
             LogUtil.log("no pre-roll, resuming content")
-            notifyAndTrackEvent(Event.CONTENT_RESUME)
+            resumeContent()
         }
         startContentHandler()
     }
 
     override fun start() {
         LogUtil.log("[AdManager] : start")
+        startAdMessageHandler()
     }
 
     override fun pause() {
         LogUtil.log("[AdManager] : pause")
         pauseAdIfPlaying()
-        removeAdMessageHandler()
     }
 
     override fun resume() {
         LogUtil.log("[AdManager] : resume")
         resumeAdIfPaused()
-        startAdMessageHandler()
     }
 
     /**
-     * Gets called every x seconds by [ContentProgressHandler]
+     * Gets called every x seconds by [ProgressHandler]
      *
      * Provides the progress of the media running.
      * This is the place where the decision logic of which ad break to play happens
      */
     override fun onContentProgressUpdate(progress: Progress) {
-        val currentTime = ceil(progress.currentTime)
-        val duration = ceil(progress.duration)
+        val currentTime = progress.currentTime
+        val duration = progress.duration
         LogUtil.log("onContentProgressUpdate: progress: $currentTime, duration: $duration")
 
         /**
@@ -127,27 +107,20 @@ open class DefaultAdManager(
         /**
          * Get the playable ad break from ad playback state depending on the current time of the media
          */
-        val adBreak = adPlaybackState.getPlayableAdBreak(currentTime, duration, adBreakFinder)
-        adBreak?.let {
+        adPlaybackState.findPlayableAdGroup(currentTime, duration, adBreakFinder)
+        adPlaybackState.getAdGroup()?.getAdBreak()?.let {
             when (it.state) {
                 /**
-                 * If the ad break has been played, send all the play finished events
+                 * If the ad break has not been played yet, and the cue point is within the prefetch range,
+                 * fetch the ad and keep it ready
                  */
-                AdBreak.AdBreakState.PLAYED -> {
-                    notifyAndTrackEvent(Event.AD_STOPPED)
-                    notifyAndTrackEvent(Event.AD_COMPLETED)
-                    notifyAndTrackEvent(Event.CONTENT_RESUME)
-                    adPlaybackState.markAdBreakAsCompleted()
-                    onContentCompleted()
-                }
-                /**
-                 * If the ad break is skipped
-                 */
-                AdBreak.AdBreakState.SKIPPED -> {
-                    notifyAndTrackEvent(Event.AD_STOPPED)
-                    notifyAndTrackEvent(Event.CONTENT_RESUME)
-                    adPlaybackState.markAdBreakAsCompleted()
-                    onContentCompleted()
+                AdBreak.AdBreakState.NOT_PLAYED -> {
+                    if (canLoadAdBreak(it, currentTime)) {
+                        fetchAdBreak(it) {
+                            loadAd()
+                            notifyAndTrackEvent(Event.LOAD_AD)
+                        }
+                    }
                 }
                 /**
                  * If the ad break has been loaded which means we have the vast for the given ad
@@ -155,93 +128,119 @@ open class DefaultAdManager(
                  */
                 AdBreak.AdBreakState.LOADED -> {
                     if (canPlayAdBreak(it, currentTime, duration)) {
-                        notifyAndTrackEvent(Event.PLAY_AD)
-                        adPlaybackState.updateStateForAdBreak(AdBreak.AdBreakState.PLAYING)
-                        adPlaybackState.markAdBreakAsPlaying()
-                    }
-                }
-                /**
-                 * If the ad break has not been played yet, and the cue point is within the prefetch range,
-                 * fetch the ad and keep it ready
-                 */
-                AdBreak.AdBreakState.NOT_PLAYED -> {
-                    if (canPreloadAdBreak(it, currentTime)) {
-                        adPlaybackState.updateStateForAdBreak(AdBreak.AdBreakState.LOADING)
-                        vastAdProvider.getVASTAd(it, this)
+                        pauseContent()
+                        playAd()
                     }
                 }
                 /**
                  * Do nothing for these states as of now
                  */
-                AdBreak.AdBreakState.LOADING, AdBreak.AdBreakState.PLAYING -> {
-                    // do nothing for now
+                else -> {
                 }
             }
         }
 
         /** send message after 1 second **/
-        contentProgressHandler.sendMessageDelayed(MEDIA_PROGRESS_HANDLER_DELAY)
+        progressHandler.sendDelayedMessageFor(
+            MEDIA_PROGRESS_HANDLER_DELAY,
+            ProgressHandler.MessageCode.CONTENT_MESSAGE
+        )
     }
 
     /**
-     * Gets called every x seconds by [AdProgressHandler]
+     * Gets called every x seconds by [ProgressHandler]
      *
      * Provides the progress of the ad running. Returns [Progress.UNDEFINED] till the ad starts playing
      */
     override fun onAdProgressUpdate(progress: Progress) {
-        if (progress == Progress.UNDEFINED) {
-            /** progress is undefined, try again **/
-            adProgressHandler.sendMessage()
-            return
-        }
-
         LogUtil.log("onAdProgressUpdate: progress: ${progress.currentTime}, duration: ${progress.duration}")
+
         val percentage = progress.currentTime / progress.duration
+        val previousPercentage = previousAdProgress.currentTime / previousAdProgress.duration
+
         when {
             /**
-             * if the previous percentage is less than 0.25F and current percentage is greater than 0.25F,
-             * fire the first quartile event
+             * if the ad state is [AdPlaybackState.AdState.STARTED], fire the AD_STARTED event
              */
-            lastAdProgressPercentage > 0 && lastAdProgressPercentage < FIRST_QUARTILE && FIRST_QUARTILE < percentage -> {
-                notifyAndTrackEvent(Event.FIRST_QUARTILE)
-            }
-            /**
-             * if the previous percentage is less than 0.50F and current percentage is greater than 0.50F,
-             * fire the midpoint event
-             */
-            lastAdProgressPercentage > 0 && lastAdProgressPercentage < MIDPOINT && MIDPOINT < percentage -> {
-                notifyAndTrackEvent(Event.MIDPOINT)
-            }
-            /**
-             * if the previous percentage is less than 0.75F and current percentage is greater than 0.75F,
-             * fire the third quartile event
-             */
-            lastAdProgressPercentage > 0 && lastAdProgressPercentage < THIRD_QUARTILE && THIRD_QUARTILE < percentage -> {
-                notifyAndTrackEvent(Event.THIRD_QUARTILE)
-            }
-            /**
-             * if the previous percentage is less than 0F and current percentage is greater than 0F,
-             * fire the started event
-             */
-            lastAdProgressPercentage == 0F && percentage > 0F -> {
+            adPlaybackState.hasAdStarted() -> {
+                notifyAndTrackEvent(Event.AD_STARTED)
+                updateAdState(AdPlaybackState.AdState.PLAYING)
                 currentAd?.let {
                     adRenderer.renderView(it.getAdElement())
                 }
-                notifyAndTrackEvent(Event.AD_STARTED)
+                if (adPlaybackState.getAdGroup()?.hasNextAdBreakInAdGroup() == true) {
+                    notifyAndTrackEvent(Event.LOAD_AD)
+                }
             }
             /**
-             * for all other cases, fire the progress event
+             * if the ad state is [AdPlaybackState.AdState.ENDED] or [AdPlaybackState.AdState.SKIPPED],
+             * stop the ad and load the next ad break in same ad group if present
              */
-            lastAdProgressPercentage < percentage -> {
+            adPlaybackState.hasAdEnded() || adPlaybackState.isAdSkipped() -> {
+                val wasAdSkipped = adPlaybackState.isAdSkipped()
+                updateAdState(AdPlaybackState.AdState.INIT)
+
+                adPlaybackState.getAdGroup()?.let {
+                    updateAdBreakState(AdBreak.AdBreakState.PLAYED)
+                    it.onAdBreakComplete()
+                    notifyAndTrackEvent(Event.AD_STOPPED)
+                    if (!wasAdSkipped) {
+                        notifyAndTrackEvent(Event.AD_COMPLETED)
+                    }
+                    removeAdMessageHandler()
+
+                    if (it.hasMoreAdBreaksInAdGroup()) {
+                        /** play the next ad break for same cue point **/
+                        fetchAdBreak(it.getAdBreak()) {
+                            loadAd()
+                            playAd()
+                        }
+                    } else {
+                        /** no ad break for this ad group, resume content **/
+                        adPlaybackState.onAdGroupComplete()
+                        if (!onContentCompleted()) {
+                            resumeContent()
+                            startContentHandler()
+                        }
+                        return
+                    }
+                }
+            }
+            /**
+             * if previous percentage is less than 0.25F and current percentage is greater than 0.25F, fire the FIRST_QUARTILE event
+             */
+            previousPercentage < FIRST_QUARTILE && percentage > FIRST_QUARTILE && progress != Progress.UNDEFINED -> {
+                notifyAndTrackEvent(Event.FIRST_QUARTILE)
+            }
+            /**
+             * if previous percentage is less than 0.50F and current percentage is greater than 0.50F, fire the MIDPOINT event
+             */
+            previousPercentage < MIDPOINT && percentage > MIDPOINT && progress != Progress.UNDEFINED -> {
+                notifyAndTrackEvent(Event.MIDPOINT)
+            }
+            /**
+             * if previous percentage is less than 0.75F and current percentage is greater than 0.75F, fire the THIRD_QUARTILE event
+             */
+            previousPercentage < THIRD_QUARTILE && percentage > THIRD_QUARTILE && progress != Progress.UNDEFINED -> {
+                notifyAndTrackEvent(Event.THIRD_QUARTILE)
+            }
+            /**
+             * if previous percentage is less than current percentage, and progress is not [Progress.UNDEFINED], fire AD_PROGRESS event
+             */
+            previousPercentage <= percentage && progress != Progress.UNDEFINED -> {
+                adRenderer.onAdProgressUpdate(progress.currentTime, progress.duration)
                 notifyAndTrackEvent(Event.AD_PROGRESS)
             }
         }
 
         /** store the percentage **/
-        lastAdProgressPercentage = percentage
+        previousAdProgress = progress
 
         /** send message after "x" ms **/
-        adProgressHandler.sendMessageAfter(AD_PROGRESS_HANDLER_DELAY)
+        progressHandler.sendDelayedMessageFor(
+            AD_PROGRESS_HANDLER_DELAY,
+            ProgressHandler.MessageCode.AD_MESSAGE
+        )
     }
 
     /**
@@ -249,9 +248,9 @@ open class DefaultAdManager(
      * When playAd is called, the plugin / client sends the onPlay callback which notifies the
      * sdk to start the ad playback.
      */
-    override fun onAdPlay() {
+    override fun onAdPlayCallback() {
+        updateAdState(AdPlaybackState.AdState.STARTED)
         removeContentHandler()
-        startAdMessageHandler()
         adRenderer.createView()
     }
 
@@ -259,33 +258,35 @@ open class DefaultAdManager(
      * Ad ended callback from the player.
      * Remove the ad message handlers and update the state
      */
-    override fun onAdEnded() {
-        removeAdMessageHandler()
-        startContentHandler()
-        lastAdProgressPercentage = 0F
+    override fun onAdEndedCallback(skipped: Boolean) {
+        if (skipped) {
+            updateAdState(AdPlaybackState.AdState.SKIPPED)
+        } else {
+            updateAdState(AdPlaybackState.AdState.ENDED)
+        }
+        previousAdProgress = Progress.UNDEFINED
         adRenderer.removeView()
-        adPlaybackState.updateStateForAdBreak(AdBreak.AdBreakState.PLAYED)
     }
 
     /**
      * Ad error callback from the player
      */
-    override fun onAdError() {
-        notifyAndTrackEvent(Event.AD_ERROR)
-        onAdEnded()
+    override fun onAdErrorCallback() {
+        notifyAndTrackError(AdErrorType.AD_ERROR)
+        onAdEndedCallback(false)
     }
 
     /**
      * Ad pause callback from the player
      */
-    override fun onAdPause() {
+    override fun onAdPauseCallback() {
         notifyAndTrackEvent(Event.AD_PAUSED)
     }
 
     /**
      * Ad resume callback from the player
      */
-    override fun onAdResume() {
+    override fun onAdResumeCallback() {
         notifyAndTrackEvent(Event.AD_RESUMED)
     }
 
@@ -294,8 +295,7 @@ open class DefaultAdManager(
      */
     override fun onSkipAdClick() {
         notifyAndTrackEvent(Event.AD_SKIPPED)
-        onAdEnded()
-        adPlaybackState.updateStateForAdBreak(AdBreak.AdBreakState.SKIPPED)
+        onAdEndedCallback(true)
     }
 
     /**
@@ -316,68 +316,92 @@ open class DefaultAdManager(
      * Called when the content is completed
      */
     override fun contentComplete() {
-        adPlaybackState.markContentCompleted()
-        if (adPlaybackState.isPostRollPlayed()) {
-            onContentCompleted()
-        }
+        adPlaybackState.contentCompleted()
+        onContentCompleted()
     }
 
     override fun destroy() {
         super.destroy()
-        adRenderer.destroy()
         adRenderer.unregisterViewClickListener(this)
-    }
-
-    /**
-     * Called on vast fetch error, may be due to network error or no ad present in the vast
-     * throw error with the message
-     */
-    override fun onVastFetchError(errorType: AdErrorType, message: String) {
-        adErrorListener.onAdError(AdError(errorType, message))
-        adPlaybackState.updateStateForAdBreak(AdBreak.AdBreakState.SKIPPED)
-        notifyAndTrackEvent(Event.VAST_ERROR, VastErrors.mapErrorTypeToInt(errorType))
-    }
-
-    /**
-     * Called on successful fetch of [VASTData]
-     * fire the ad loaded event
-     */
-    override fun onVastFetchSuccess(vastData: VASTData) {
-        currentAd = adPlaybackState.getAdFrom(vastData)
-        adPlaybackState.updateStateForAdBreak(AdBreak.AdBreakState.LOADED)
-        if (currentAd?.getAdMediaUrls()?.isNotEmpty() == true) {
-            notifyAndTrackEvent(Event.LOAD_AD)
-        } else {
-            notifyAndTrackEvent(
-                Event.AD_ERROR,
-                VastErrors.mapErrorTypeToInt(AdErrorType.NO_MEDIA_URL)
-            )
-            adErrorListener.onAdError(
-                AdError(
-                    AdErrorType.NO_MEDIA_URL,
-                    StringErrorConstants.NO_MEDIA_URL
-                )
-            )
-        }
+        adRenderer.destroy()
     }
 
     /**
      * if the content is completed or the post roll is played,
      * fire all ads completed event and remove all the handlers.
      */
-    private fun onContentCompleted() {
-        if (adPlaybackState.contentCompleted || adPlaybackState.isPostRollPlayed()) {
+    private fun onContentCompleted(): Boolean {
+        if (adPlaybackState.hasContentCompleted() && adPlaybackState.isPostRollPlayed()) {
             removeContentHandler()
             removeAdMessageHandler()
             notifyAndTrackEvent(Event.ALL_AD_COMPLETED)
+            return true
         }
+        return false
+    }
+
+    private fun fetchAdBreak(adBreak: AdBreak, onSuccess: () -> (Unit)) {
+        updateAdBreakState(AdBreak.AdBreakState.LOADING)
+        vastAdProvider.getVASTAd(adBreak, object : VastAdProvider.Listener {
+            /**
+             * Called on successful fetch of [VASTData]
+             * fire the ad loaded event
+             */
+            override fun onVastFetchSuccess(vastData: VASTData) {
+                updateAdBreakState(AdBreak.AdBreakState.LOADED)
+                currentAd = adPlaybackState.getAdGroup()?.getVastAd(vastData)
+
+                if (currentAd?.getAdMediaUrls()?.isNotEmpty() == true) {
+                    onSuccess()
+                } else {
+                    notifyAndTrackError(
+                        AdErrorType.NO_MEDIA_URL,
+                        Error.NO_MEDIA_FILE_ERROR.errorMessage
+                    )
+                }
+            }
+
+            /**
+             * Called on vast fetch error, may be due to network error or no ad present in the vast
+             * throw error with the message
+             */
+            override fun onVastFetchError(errorType: AdErrorType, message: String) {
+                updateAdBreakState(AdBreak.AdBreakState.ERROR)
+                notifyAndTrackError(errorType, message)
+            }
+        })
+    }
+
+    private fun loadAd() {
+        notifyAndTrackEvent(Event.AD_LOADED)
+    }
+
+    private fun playAd() {
+        notifyAndTrackEvent(Event.PLAY_AD)
+    }
+
+    private fun pauseContent() {
+        notifyAndTrackEvent(Event.CONTENT_PAUSE)
+    }
+
+    private fun resumeContent() {
+        notifyAndTrackEvent(Event.CONTENT_RESUME)
+    }
+
+    private fun updateAdBreakState(state: AdBreak.AdBreakState) {
+        adPlaybackState.getAdGroup()?.updateAdBreakState(state)
+    }
+
+    private fun updateAdState(state: AdPlaybackState.AdState) {
+        adPlaybackState.updateAdState(state)
     }
 
     /**
      * check if the given ad break be preloaded
      */
-    private fun canPreloadAdBreak(adBreak: AdBreak, currentTime: Float): Boolean {
-        return adBreak.timeOffsetInSec - currentTime <= adRenderingSettings.getPreloadTime() && adBreak.timeOffsetInSec != -1f
+    private fun canLoadAdBreak(adBreak: AdBreak, currentTime: Float): Boolean {
+        return (adBreak.timeOffsetInSec - currentTime <= adRenderer.getRenderingSettings()
+            .getPreloadTime() || (adPlaybackState.hasContentCompleted() && adBreak.timeOffset == AdBreak.TimeOffsetTypes.END))
     }
 
     /**
@@ -391,9 +415,10 @@ open class DefaultAdManager(
      * pause the ad if playing
      */
     private fun pauseAdIfPlaying() {
-        if (adPlaybackState.isAdPlaying) {
+        if (adPlaybackState.isAdPlaying()) {
+            removeAdMessageHandler()
             notifyAndTrackEvent(Event.PAUSE_AD)
-            adPlaybackState.isAdPaused = true
+            updateAdState(AdPlaybackState.AdState.PAUSED)
         }
     }
 
@@ -401,17 +426,34 @@ open class DefaultAdManager(
      * resumed the ad if paused
      */
     private fun resumeAdIfPaused() {
-        if (adPlaybackState.isAdPaused) {
+        if (adPlaybackState.isAdPaused()) {
+            startAdMessageHandler()
             notifyAndTrackEvent(Event.RESUME_AD)
-            adPlaybackState.isAdPaused = false
+            updateAdState(AdPlaybackState.AdState.PLAYING)
         }
     }
 
+    /**
+     * notify all the registered event handlers for the given event
+     */
+    private fun notifyAndTrackEvent(event: Event) {
+        playerAdEventHelper.handleEvent(event, currentAd)
+        trackingEventHelper.handleEvent(event, currentAd)
+    }
+
+    /**
+     * notify all the registered event handlers for the given event
+     */
+    private fun notifyAndTrackError(errorCode: AdErrorType, errorMessage: String? = "") {
+        playerAdEventHelper.handleError(errorCode, errorMessage)
+        trackingEventHelper.handleError(errorCode, currentAd)
+    }
+
     companion object {
-        /** call media progress provider after every 1 second **/
-        const val MEDIA_PROGRESS_HANDLER_DELAY = 1000L // in ms
+        /** call media progress provider after every 250 ms **/
+        const val MEDIA_PROGRESS_HANDLER_DELAY = 200L // in ms
 
         /** call ad progress provider after every 250 ms **/
-        const val AD_PROGRESS_HANDLER_DELAY = 250L // in ms
+        const val AD_PROGRESS_HANDLER_DELAY = 200L // in ms
     }
 }

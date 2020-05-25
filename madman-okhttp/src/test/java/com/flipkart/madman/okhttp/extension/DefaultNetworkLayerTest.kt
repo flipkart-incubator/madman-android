@@ -78,7 +78,7 @@ class DefaultNetworkLayerTest {
         doAnswer(answer).`when`(mockOkHttpCall).enqueue(anyObject())
 
         networkLayer.fetch(
-            NetworkAdRequest().apply { url = "https://www.google.com" },
+            NetworkAdRequest("").apply { url = "https://www.google.com" },
             mockNetworkListener,
             mockCancellationSignal
         )
@@ -107,7 +107,7 @@ class DefaultNetworkLayerTest {
         doAnswer(answer).`when`(mockOkHttpCall).enqueue(anyObject())
 
         networkLayer.fetch(
-            NetworkAdRequest().apply { url = "https://www.google.com" },
+            NetworkAdRequest("").apply { url = "https://www.google.com" },
             mockNetworkListener,
             mockCancellationSignal
         )
@@ -142,7 +142,7 @@ class DefaultNetworkLayerTest {
         doAnswer(answer).`when`(mockOkHttpCall).enqueue(anyObject())
 
         networkLayer.fetch(
-            NetworkAdRequest().apply { url = "https://www.google.com" },
+            NetworkAdRequest("").apply { url = "https://www.google.com" },
             mockNetworkListener,
             mockCancellationSignal
         )
