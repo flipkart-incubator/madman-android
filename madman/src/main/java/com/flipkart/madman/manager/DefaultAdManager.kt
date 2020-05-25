@@ -160,6 +160,53 @@ open class DefaultAdManager(
 
         when {
             /**
+             * if the ad state is [AdPlaybackState.AdState.STARTED], fire the AD_STARTED event
+             */
+            adPlaybackState.hasAdStarted() -> {
+                notifyAndTrackEvent(Event.AD_STARTED)
+                adPlaybackState.updateAdState(AdPlaybackState.AdState.PLAYING)
+                currentAd?.let {
+                    adRenderer.renderView(it.getAdElement())
+                }
+                if (adPlaybackState.getAdGroup()?.hasNextAdBreakInAdGroup() == true) {
+                    notifyAndTrackEvent(Event.LOAD_AD)
+                }
+            }
+            /**
+             * if the ad state is [AdPlaybackState.AdState.ENDED] or [AdPlaybackState.AdState.SKIPPED],
+             * stop the ad and load the next ad break in same ad group if present
+             */
+            adPlaybackState.hasAdEnded() || adPlaybackState.isAdSkipped() -> {
+                val wasAdSkipped = adPlaybackState.isAdSkipped()
+                updateAdState(AdPlaybackState.AdState.INIT)
+
+                adPlaybackState.getAdGroup()?.let {
+                    updateAdBreakState(AdBreak.AdBreakState.PLAYED)
+                    it.onAdBreakComplete()
+                    notifyAndTrackEvent(Event.AD_STOPPED)
+                    if (!wasAdSkipped) {
+                        notifyAndTrackEvent(Event.AD_COMPLETED)
+                    }
+                    removeAdMessageHandler()
+
+                    if (it.hasMoreAdBreaksInAdGroup()) {
+                        /** play the next ad break for same cue point **/
+                        fetchAdBreak(it.getAdBreak()) {
+                            loadAd()
+                            playAd()
+                        }
+                    } else {
+                        /** no ad break for this ad group, resume content **/
+                        adPlaybackState.onAdGroupComplete()
+                        if (!onContentCompleted()) {
+                            resumeContent()
+                            startContentHandler()
+                        }
+                        return
+                    }
+                }
+            }
+            /**
              * if previous percentage is less than 0.25F and current percentage is greater than 0.25F, fire the FIRST_QUARTILE event
              */
             previousPercentage < FIRST_QUARTILE && percentage > FIRST_QUARTILE -> {
@@ -182,55 +229,6 @@ open class DefaultAdManager(
              */
             previousPercentage <= percentage && progress != Progress.UNDEFINED -> {
                 notifyAndTrackEvent(Event.AD_PROGRESS)
-            }
-            /**
-             * if the ad state is [AdPlaybackState.AdState.STARTED], fire the AD_STARTED event
-             */
-            adPlaybackState.hasAdStarted() -> {
-                notifyAndTrackEvent(Event.AD_STARTED)
-                adPlaybackState.updateAdState(AdPlaybackState.AdState.PLAYING)
-                currentAd?.let {
-                    adRenderer.renderView(it.getAdElement())
-                }
-                if (adPlaybackState.getAdGroup()?.hasNextAdBreakInAdGroup() == true) {
-                    notifyAndTrackEvent(Event.LOAD_AD)
-                }
-            }
-            /**
-             * if the ad state is [AdPlaybackState.AdState.ENDED] or [AdPlaybackState.AdState.SKIPPED],
-             * stop the ad and load the next ad break in same ad group if present
-             */
-            adPlaybackState.hasAdEnded() || adPlaybackState.isAdSkipped() -> {
-                val wasAdSkipped = adPlaybackState.isAdSkipped()
-                updateAdState(AdPlaybackState.AdState.INIT)
-                previousAdProgress = Progress.UNDEFINED
-
-                adPlaybackState.getAdGroup()?.let {
-                    updateAdBreakState(AdBreak.AdBreakState.PLAYED)
-                    it.onAdBreakComplete()
-                    notifyAndTrackEvent(Event.AD_STOPPED)
-                    if (!wasAdSkipped) {
-                        notifyAndTrackEvent(Event.AD_COMPLETED)
-                    }
-                    removeAdMessageHandler()
-
-                    if (it.hasMoreAdBreaksInAdGroup()) {
-                        /** play the next ad break for same cue point **/
-                        fetchAdBreak(it.getAdBreak()) {
-                            loadAd()
-                            playAd()
-                        }
-                    } else {
-                        /** no ad break for this ad group, resume content **/
-                        adPlaybackState.onAdGroupComplete()
-                        if (onContentCompleted()) {
-                            return
-                        }
-                        resumeContent()
-                        startContentHandler()
-                        return
-                    }
-                }
             }
         }
 
@@ -265,6 +263,7 @@ open class DefaultAdManager(
         } else {
             updateAdState(AdPlaybackState.AdState.ENDED)
         }
+        previousAdProgress = Progress.UNDEFINED
         adRenderer.removeView()
     }
 
@@ -400,7 +399,8 @@ open class DefaultAdManager(
      * check if the given ad break be preloaded
      */
     private fun canLoadAdBreak(adBreak: AdBreak, currentTime: Float): Boolean {
-        return (adBreak.timeOffsetInSec - currentTime <= adRenderer.getRenderingSettings().getPreloadTime() || (adPlaybackState.hasContentCompleted() && adBreak.timeOffset == AdBreak.TimeOffsetTypes.END))
+        return (adBreak.timeOffsetInSec - currentTime <= adRenderer.getRenderingSettings()
+            .getPreloadTime() || (adPlaybackState.hasContentCompleted() && adBreak.timeOffset == AdBreak.TimeOffsetTypes.END))
     }
 
     /**
@@ -449,7 +449,7 @@ open class DefaultAdManager(
     }
 
     companion object {
-        /** call media progress provider after every 1 second **/
+        /** call media progress provider after every 250 ms **/
         const val MEDIA_PROGRESS_HANDLER_DELAY = 200L // in ms
 
         /** call ad progress provider after every 250 ms **/
