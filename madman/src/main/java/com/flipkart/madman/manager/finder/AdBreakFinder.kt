@@ -29,7 +29,8 @@ interface AdBreakFinder {
         currentPosition: Float,
         contentStartPosition: Float,
         contentDuration: Float,
-        adBreakList: List<AdBreak>
+        adBreakList: List<AdBreak>,
+        isContentCompleted: Boolean
     ): List<AdBreak>
 
     /**

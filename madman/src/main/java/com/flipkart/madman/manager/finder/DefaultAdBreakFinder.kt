@@ -73,7 +73,8 @@ class DefaultAdBreakFinder : AdBreakFinder {
         currentPosition: Float,
         contentStartPosition: Float,
         contentDuration: Float,
-        adBreakList: List<AdBreak>
+        adBreakList: List<AdBreak>,
+        isContentCompleted: Boolean
     ): List<AdBreak> {
         val adBreaks = mutableListOf<AdBreak>()
 
@@ -81,9 +82,14 @@ class DefaultAdBreakFinder : AdBreakFinder {
          * If position has changed, do a linear search to find out previous and next cue point index, and update accordingly
          */
         if (scanForAdBreak(currentPosition)) {
-            previousCuePointIndex = getAdBreakIndexForPosition(currentPosition, adBreakList)
-            nextCuePointIndex =
-                if (previousCuePointIndex < adBreakList.size - 1) previousCuePointIndex + 1 else Constant.INDEX_UNSET
+            if (!isContentCompleted) {
+                previousCuePointIndex = getAdBreakIndexForPosition(currentPosition, adBreakList)
+                nextCuePointIndex =
+                    if (previousCuePointIndex < adBreakList.size - 1) previousCuePointIndex + 1 else Constant.INDEX_UNSET
+            } else {
+                previousCuePointIndex = adBreakList.size - 1
+                nextCuePointIndex = adBreakList.size - 1
+            }
             LogUtil.log("[DefaultAdBreakFinder] progress position changed $currentPosition, new previous point at $previousCuePointIndex, new next point at $nextCuePointIndex")
         }
 
@@ -149,7 +155,7 @@ class DefaultAdBreakFinder : AdBreakFinder {
         nextCuePoint: Float,
         currentPosition: Float
     ): Boolean {
-        return currentPosition > 0 && ((currentPosition < nextCuePoint && currentPosition < previousCuePoint) || (currentPosition > nextCuePoint && currentPosition > previousCuePoint))
+        return ((currentPosition < nextCuePoint && currentPosition < previousCuePoint) || (currentPosition > nextCuePoint && currentPosition > previousCuePoint))
     }
 
     /**

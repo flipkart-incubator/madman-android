@@ -118,7 +118,8 @@ class AdPlaybackState(private val adBreaks: List<AdBreak>) {
                 currentPosition,
                 contentStartPosition,
                 duration,
-                adBreaks
+                adBreaks,
+                contentCompleted
             )
             playableAdGroup = if (playableAdBreaks.isNotEmpty()) {
                 AdGroup(playableAdBreaks)

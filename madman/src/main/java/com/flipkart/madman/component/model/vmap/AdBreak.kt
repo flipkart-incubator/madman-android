@@ -90,6 +90,6 @@ class AdBreak {
      * represents the state for [AdBreak]
      */
     enum class AdBreakState {
-        NOT_PLAYED, LOADED, PLAYED, ERROR
+        NOT_PLAYED, LOADING, LOADED, PLAYED, ERROR
     }
 }

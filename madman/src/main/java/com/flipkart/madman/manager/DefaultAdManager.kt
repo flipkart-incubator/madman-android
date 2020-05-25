@@ -68,7 +68,7 @@ open class DefaultAdManager(
             LogUtil.log("pre-roll ads present")
         } else {
             LogUtil.log("no pre-roll, resuming content")
-            notifyAndTrackEvent(Event.CONTENT_RESUME)
+            resumeContent()
         }
         startContentHandler()
     }
@@ -115,7 +115,7 @@ open class DefaultAdManager(
                  * fetch the ad and keep it ready
                  */
                 AdBreak.AdBreakState.NOT_PLAYED -> {
-                    if (canPreloadAdBreak(it, currentTime)) {
+                    if (canLoadAdBreak(it, currentTime)) {
                         fetchAdBreak(it) {
                             loadAd()
                             notifyAndTrackEvent(Event.LOAD_AD)
@@ -341,6 +341,7 @@ open class DefaultAdManager(
     }
 
     private fun fetchAdBreak(adBreak: AdBreak, onSuccess: () -> (Unit)) {
+        updateAdBreakState(AdBreak.AdBreakState.LOADING)
         vastAdProvider.getVASTAd(adBreak, object : VastAdProvider.Listener {
             /**
              * Called on successful fetch of [VASTData]
@@ -398,8 +399,8 @@ open class DefaultAdManager(
     /**
      * check if the given ad break be preloaded
      */
-    private fun canPreloadAdBreak(adBreak: AdBreak, currentTime: Float): Boolean {
-        return adBreak.timeOffsetInSec - currentTime <= adRenderer.getRenderingSettings().getPreloadTime() && adBreak.timeOffsetInSec != -1f
+    private fun canLoadAdBreak(adBreak: AdBreak, currentTime: Float): Boolean {
+        return (adBreak.timeOffsetInSec - currentTime <= adRenderer.getRenderingSettings().getPreloadTime() || (adPlaybackState.hasContentCompleted() && adBreak.timeOffset == AdBreak.TimeOffsetTypes.END))
     }
 
     /**

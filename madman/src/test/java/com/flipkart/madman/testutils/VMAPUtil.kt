@@ -108,6 +108,10 @@ object VMAPUtil {
         return XmlUtil.readString("vmap_with_preroll.xml")
     }
 
+    fun readVMAPWithoutPostRoll(): String {
+        return XmlUtil.readString("vmap_without_post_roll.xml")
+    }
+
     fun readVMAP(): String {
         return XmlUtil.readString("vmap.xml")
     }
