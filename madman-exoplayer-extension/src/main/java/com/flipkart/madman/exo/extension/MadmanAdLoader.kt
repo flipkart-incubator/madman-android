@@ -77,7 +77,9 @@ class MadmanAdLoader private constructor(
     context: Context,
     networkLayer: NetworkLayer,
     private val adTagUri: Uri?,
-    private val adsResponse: String?
+    private val adsResponse: String?,
+    private val adEventListener: AdEventListener?,
+    private val adErrorListener: AdErrorListener?
 ) : Player.EventListener, AdsLoader, AdPlayer, ContentProgressProvider, AdErrorListener,
     AdLoadListener, AdEventListener {
     private var debug = true
@@ -167,6 +169,19 @@ class MadmanAdLoader private constructor(
      */
         (private val context: Context, private val networkLayer: NetworkLayer) {
 
+        private var adEventListener: AdEventListener? = null
+        private var adErrorListener: AdErrorListener? = null
+
+        fun setAdEventListener(listener: AdEventListener): Builder {
+            this.adEventListener = listener
+            return this
+        }
+
+        fun setAdErrorListener(listener: AdErrorListener): Builder {
+            this.adErrorListener = listener
+            return this
+        }
+
         /**
          * Returns a new [MadmanAdLoader] for the specified ad tag.
          *
@@ -180,7 +195,9 @@ class MadmanAdLoader private constructor(
                 context,
                 networkLayer,
                 adTagUri,
-                null
+                null,
+                adEventListener,
+                adErrorListener
             )
         }
 
@@ -196,7 +213,9 @@ class MadmanAdLoader private constructor(
                 context,
                 networkLayer,
                 null,
-                adsResponse
+                adsResponse,
+                adEventListener,
+                adErrorListener
             )
         }
     }
@@ -358,6 +377,12 @@ class MadmanAdLoader private constructor(
         this.adsManager = manager
         this.adsManager?.addAdEventListener(this)
         this.adsManager?.addAdErrorListener(this)
+        if (adEventListener != null) {
+            this.adsManager?.addAdEventListener(adEventListener)
+        }
+        if (adErrorListener != null) {
+            this.adsManager?.addAdErrorListener(adErrorListener)
+        }
         if (player != null) {
             // If a player is attached already, start playback immediately.
             try {
