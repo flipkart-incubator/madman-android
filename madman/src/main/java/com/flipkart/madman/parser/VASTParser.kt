@@ -311,12 +311,6 @@ class VASTParser(private var pullParser: XmlPullParser) :
                     LinearAdMedia.TRACKING_XML_TAG -> {
                         val tracking = Tracking()
                         tracking.event = readAttr(parser, Tracking.EVENT_XML_ATTR)
-                        tracking.offset = Utils.convertAdTimeOffsetToSeconds(
-                            readAttr(
-                                parser,
-                                Tracking.OFFSET_XML_ATTR
-                            )
-                        )
                         tracking.url = readText(parser)
                         trackingEvents.add(tracking)
                     }

@@ -128,7 +128,6 @@ open class DefaultAdManager(
                  */
                 AdBreak.AdBreakState.LOADED -> {
                     if (canPlayAdBreak(it, currentTime, duration)) {
-//                        notifyAndTrackEvent(Event.AD_BREAK_STARTED)
                         pauseContent()
                         playAd()
                     }
@@ -223,8 +222,10 @@ open class DefaultAdManager(
                         }
                     } else {
                         /** no ad break for this ad group, resume content **/
-//                        notifyAndTrackEvent(Event.AD_BREAK_ENDED)
                         adPlaybackState.onAdGroupComplete()
+                        if (onContentCompleted()) {
+                            return
+                        }
                         resumeContent()
                         startContentHandler()
                         return
@@ -329,10 +330,14 @@ open class DefaultAdManager(
      * if the content is completed or the post roll is played,
      * fire all ads completed event and remove all the handlers.
      */
-    private fun onContentCompleted() {
-        if (adPlaybackState.hasContentCompleted() || adPlaybackState.isPostRollPlayed()) {
+    private fun onContentCompleted(): Boolean {
+        if (adPlaybackState.hasContentCompleted() && adPlaybackState.isPostRollPlayed()) {
+            removeContentHandler()
+            removeAdMessageHandler()
             notifyAndTrackEvent(Event.ALL_AD_COMPLETED)
+            return true
         }
+        return false
     }
 
     private fun fetchAdBreak(adBreak: AdBreak, onSuccess: () -> (Unit)) {
@@ -343,8 +348,6 @@ open class DefaultAdManager(
              */
             override fun onVastFetchSuccess(vastData: VASTData) {
                 updateAdBreakState(AdBreak.AdBreakState.LOADED)
-//                notifyAndTrackEvent(Event.AD_BREAK_LOADED)
-
                 currentAd = adPlaybackState.getAdGroup()?.getVastAd(vastData)
 
                 if (currentAd?.getAdMediaUrls()?.isNotEmpty() == true) {
