@@ -99,6 +99,24 @@ object VMAPUtil {
         return result
     }
 
+    fun createVMAPWithoutPostRoll(): VMAPData {
+        var result = VMAPData()
+        XmlParser.Builder().build(Handler(), CurrentThreadExecutor())
+            .parse(
+                readVMAPWithoutPostRoll(),
+                object : XmlParser.ParserListener<VMAPData> {
+                    override fun onSuccess(t: VMAPData?) {
+                        result = t ?: result
+                        lock.countDown()
+                    }
+
+                    override fun onFailure(type: Int, message: String?) {
+                    }
+                })
+        lock.await(2000, TimeUnit.MILLISECONDS)
+        return result
+    }
+
     fun createVAST(): VASTData {
         val value = readVAST()
         return createVASTParser(value).parse(value) ?: VASTData()

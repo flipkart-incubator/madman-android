@@ -468,4 +468,108 @@ class DefaultAdManagerTest {
         assert(adEventCaptor.allValues[adEventCaptorCount + 1].getType() == AdEventType.CONTENT_RESUME_REQUESTED)
         reset(mockAdEventListener)
     }
+
+    /**
+     * Test to verify [AdManager.getCuePoints]
+     */
+    @Test
+    fun testCuePoints() {
+        /** initialise the ad manager **/
+        adManager?.init(mockContentProgressProvider)
+
+        /** verify cue points **/
+        val cuePoints = adManager?.getCuePoints()
+        assert(cuePoints?.size == 4)
+    }
+
+    /**
+     * Test to verify when content is completed, and there is no post roll ad to play
+     */
+    @Test
+    fun testWhenContentIsCompletedWithoutPostRollAd() {
+        val vmap = VMAPUtil.createVMAPWithoutPostRoll()
+        adManager = DefaultAdManager(
+            vmap,
+            mockNetworkLayer,
+            mockXmlParser,
+            mockXmlValidator,
+            mockAdRenderer
+        )
+        adManager?.addAdErrorListener(mockAdErrorListener)
+        adManager?.addAdEventListener(mockAdEventListener)
+
+        /** initialise the ad manager **/
+        adManager?.init(mockContentProgressProvider)
+
+        `when`(mockContentProgressProvider.getContentProgress()).thenReturn(Progress(1000, 1000))
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+
+        /** mark as content is complete **/
+        adManager?.contentComplete()
+
+        /** ad event listener is called with ALL_AD_COMPLETED event **/
+        verify(mockAdEventListener, times(2)).onAdEvent(capture(adEventCaptor))
+        assert(adEventCaptor.value.getType() == AdEventType.ALL_AD_COMPLETED)
+    }
+
+    /**
+     * Test to verify when content is completed, and there is a post roll ad to play
+     */
+    @Test
+    fun testWhenContentIsCompletedWithPostRollAd() {
+        /** initialise the ad manager **/
+        adManager?.init(mockContentProgressProvider)
+
+        `when`(mockContentProgressProvider.getContentProgress()).thenReturn(Progress(1000, 1000))
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+
+        /** mark as content is complete **/
+        adManager?.contentComplete()
+
+        /** ad event listener is called with LOADED event for post roll **/
+        verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
+        assert(adEventCaptor.value.getType() == AdEventType.LOADED)
+    }
+
+    /**
+     * Test to verify the behaviour when there is an error while playing ad
+     */
+    @Test
+    fun testWhenThereIsAnErrorWhilePlayingAd() {
+        /** initialise the ad manager **/
+        adManager?.init(mockContentProgressProvider)
+
+        var adEventCaptorCount = 0
+
+        /** ad event listener is called with LOADED event **/
+        verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
+        adEventCaptorCount += 1
+        assert(adEventCaptor.value.getType() == AdEventType.LOADED)
+        verify(mockAdPlayer, times(1)).loadAd(anyObject())
+        reset(mockAdEventListener)
+
+        adManager?.start()
+        adManager?.onPlay()
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+
+        /** ad event listener is called with STARTED event **/
+        verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
+        adEventCaptorCount += 1
+        assert(adEventCaptor.value.getType() == AdEventType.STARTED)
+        reset(mockAdEventListener)
+
+        /** mimic error case **/
+        adManager?.onError()
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+
+        /** ad error listener is called with AD_ERROR event **/
+        verify(mockAdErrorListener, times(1)).onAdError(capture(adErrorCaptor))
+        assert(adErrorCaptor.value.getType() == AdErrorType.AD_ERROR)
+
+        /** content is resumed, ad event listener is called with COMPLETED and CONTENT_RESUME_REQUESTED event **/
+        verify(mockAdEventListener, times(2)).onAdEvent(capture(adEventCaptor))
+        assert(adEventCaptor.allValues[adEventCaptorCount].getType() == AdEventType.COMPLETED)
+        assert(adEventCaptor.allValues[adEventCaptorCount + 1].getType() == AdEventType.CONTENT_RESUME_REQUESTED)
+        reset(mockAdEventListener)
+    }
 }
