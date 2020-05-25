@@ -29,6 +29,7 @@ import com.flipkart.madman.manager.data.providers.NetworkVastAdProvider
 import com.flipkart.madman.manager.data.providers.StringVastAdProvider
 import com.flipkart.madman.manager.data.providers.VastAdProviderImpl
 import com.flipkart.madman.manager.finder.DefaultAdBreakFinder
+import com.flipkart.madman.manager.state.AdPlaybackState
 import com.flipkart.madman.network.NetworkLayer
 import com.flipkart.madman.parser.XmlParser
 import com.flipkart.madman.provider.ContentProgressProvider
@@ -130,49 +131,56 @@ class DefaultAdManagerTest {
     }
 
     /**
-     * Test to verify the behaviour with and without pre-roll present.
-     * Expectation: CONTENT_RESUME_REQUESTED event should be fired when no pre-roll ad to play, else not
+     * Test to verify the behaviour when there is a pre-roll add
      */
     @Test
-    fun testBehaviourWithAndWithoutPreRoll() {
-        var vmap = VMAPUtil.createVMAP(false)
-
-        adManager = DefaultAdManager(
-            vmap,
-            mockNetworkLayer,
-            mockXmlParser,
-            mockXmlValidator,
-            mockAdRenderer
-        )
-
-        adManager?.addAdErrorListener(mockAdErrorListener)
-        adManager?.addAdEventListener(mockAdEventListener)
+    fun testBehaviorWithPreRollAd() {
         /** initialise the ad manager **/
         adManager?.init(mockContentProgressProvider)
 
-        /** ad event listener is called with content resume requested as no pre-roll is present **/
-        verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
-        assert(adEventCaptor.value.getType() == AdEventType.CONTENT_RESUME_REQUESTED)
-        reset(mockAdEventListener)
-
-        vmap = VMAPUtil.createVMAP(true)
-
-        adManager = DefaultAdManager(
-            vmap,
-            mockNetworkLayer,
-            mockXmlParser,
-            mockXmlValidator,
-            mockAdRenderer
+        /** verify there is ad break to be played and other properties **/
+        assert(adManager?.adPlaybackState?.getAdGroup()?.getAdBreak() != null)
+        assert(adManager?.adPlaybackState?.getAdGroup()?.getAdBreak()?.timeOffsetInSec == 0f)
+        assert(
+            adManager?.adPlaybackState?.getAdGroup()
+                ?.getAdBreak()?.timeOffset == AdBreak.TimeOffsetTypes.START
         )
 
-        adManager?.addAdErrorListener(mockAdErrorListener)
-        adManager?.addAdEventListener(mockAdEventListener)
-        /** initialise the ad manager **/
-        adManager?.init(mockContentProgressProvider)
-
-        /** ad event listener is called with loaded event as pre-roll is present **/
+        /** ad event listener is called with LOADED as there is a pre-roll ad **/
         verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
         assert(adEventCaptor.value.getType() == AdEventType.LOADED)
+        reset(mockAdEventListener)
+
+        adManager?.start()
+        adManager?.onPlay()
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+
+        /** ad event listener is called with STARTED event **/
+        verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
+    }
+
+    /**
+     * Test to verify the behaviour when there is a no pre-roll add
+     */
+    @Test
+    fun testBehaviourWithoutPreRollAd() {
+        val vmap = VMAPUtil.createVMAP(false)
+        adManager = DefaultAdManager(
+            vmap,
+            mockNetworkLayer,
+            mockXmlParser,
+            mockXmlValidator,
+            mockAdRenderer
+        )
+        adManager?.addAdErrorListener(mockAdErrorListener)
+        adManager?.addAdEventListener(mockAdEventListener)
+
+        /** initialise the ad manager **/
+        adManager?.init(mockContentProgressProvider)
+
+        /** ad event listener is called with CONTENT_RESUME_REQUESTED as no pre-roll is present **/
+        verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
+        assert(adEventCaptor.value.getType() == AdEventType.CONTENT_RESUME_REQUESTED)
     }
 
     /**
@@ -188,20 +196,25 @@ class DefaultAdManagerTest {
         verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
         assert(adEventCaptor.value.getType() == AdEventType.LOADED)
         verify(mockAdPlayer, times(1)).loadAd(anyObject())
+        reset(mockAdEventListener)
 
         /** start and play the ad manager **/
         adManager?.start()
         adManager?.onPlay()
-
         ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
-        reset(mockAdEventListener)
 
         /** return the current progress of ad **/
         `when`(mockAdPlayer.getAdProgress()).thenReturn(Progress(3, 10))
         ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
 
+        /** ad event listener is called with STARTED event since we have a pre roll ad **/
+        verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
+        assert(adEventCaptor.value.getType() == AdEventType.STARTED)
+        reset(mockAdEventListener)
+
         /** pause the ad **/
         adManager?.pause()
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
 
         /** ad event listener is called with PAUSED event **/
         verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
@@ -211,7 +224,8 @@ class DefaultAdManagerTest {
         reset(mockAdPlayer)
 
         /** return the current progress of ad after resumed **/
-        `when`(mockAdPlayer.getAdProgress()).thenReturn(Progress(6, 10))
+        `when`(mockAdPlayer.getAdProgress()).thenReturn(Progress(3, 10))
+
         /** resume the ad now **/
         adManager?.resume()
 
@@ -290,11 +304,15 @@ class DefaultAdManagerTest {
         verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
         assert(adEventCaptor.value.getType() == AdEventType.LOADED)
         verify(mockAdPlayer, times(1)).loadAd(anyObject())
+        reset(mockAdEventListener)
 
         adManager?.start()
         adManager?.onPlay()
-
         ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+
+        /** ad event listener is called with STARTED event **/
+        verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
+        assert(adEventCaptor.value.getType() == AdEventType.STARTED)
         reset(mockAdEventListener)
 
         /** skip ad **/
@@ -307,9 +325,10 @@ class DefaultAdManagerTest {
 
         ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
 
-        /** ad event listener is called with STOPPED and CONTENT_RESUME_REQUESTED event **/
+        /** ad event listener is called with CONTENT_RESUME_REQUESTED event **/
         verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
         assert(adEventCaptor.value.getType() == AdEventType.CONTENT_RESUME_REQUESTED)
+        verify(mockAdPlayer, times(1)).stopAd()
     }
 
     /**
@@ -340,64 +359,113 @@ class DefaultAdManagerTest {
     }
 
     /**
-     * Test to verify the behaviour of [AdManager] for a post roll ad
+     * Test to verify the entire ad playback flow.
+     * ie all the correct events are fired, renderer & player interactions
      */
     @Test
-    fun testBehaviourWithPostRollAd() {
-        `when`(mockContentProgressProvider.getContentProgress()).thenReturn(Progress(10000, 10000))
-
-        val answer = Answer { invocation ->
-            val listener = invocation.getArgument<VastAdProvider.Listener>(1)
-            // mimics a vast fetch error callback
-            listener.onVastFetchSuccess(
-                VMAPUtil.createVAST()
-            )
-        }
-        doAnswer(answer).`when`(mockNetworkVastAdProvider).getVASTAd(anyObject(), anyObject())
-
+    fun testBehaviourForAdPlayback() {
         /** initialise the ad manager **/
-        adManager?.init(
-            mockContentProgressProvider,
-            DefaultAdBreakFinder(),
-            VastAdProviderImpl(mockStringVastAdProvider, mockNetworkVastAdProvider)
-        )
+        adManager?.init(mockContentProgressProvider)
 
-        /** ad event listener is called with LOADED event since we have a post roll ad **/
+        var adEventCaptorCount = 0
+
+        /** ad event listener is called with LOADED event as pre-roll is present **/
         verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
+        adEventCaptorCount += 1
         assert(adEventCaptor.value.getType() == AdEventType.LOADED)
-        assert(adEventCaptor.value.getAdElement() != null)
-        verify(mockAdPlayer, times(1)).loadAd(anyObject())
-    }
+        reset(mockAdEventListener)
 
-    /**
-     * Test to verify that [AdPlaybackState] returns the correct ad break
-     */
-    @Test
-    fun testAdPlaybackStateForDifferentCases() {
-        val vmap = VMAPUtil.createVMAP(true)
-        adManager = DefaultAdManager(
-            vmap,
-            mockNetworkLayer,
-            mockXmlParser,
-            mockXmlValidator,
-            mockAdRenderer
-        )
-        adManager?.addAdErrorListener(mockAdErrorListener)
-        adManager?.addAdEventListener(mockAdEventListener)
+        /** start the ad manager, called when loaded event is fired **/
+        adManager?.start()
 
-        /** initialise the ad manager **/
-        adManager?.init(
-            mockContentProgressProvider,
-            DefaultAdBreakFinder(),
-            VastAdProviderImpl(mockStringVastAdProvider, mockNetworkVastAdProvider)
-        )
+        adManager?.onPlay()
+        `when`(mockAdPlayer.getAdProgress()).thenReturn(Progress.UNDEFINED)
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
 
-        /** mock content provider to return 0 ie content is starting **/
-        `when`(mockContentProgressProvider.getContentProgress()).thenReturn(Progress(0, 10000))
+        /** verify ad renderer's create view is called once **/
+        verify(mockAdRenderer, times(1)).createView()
+        reset(mockAdRenderer)
 
-        /** verify there is ad break to be played and other properties **/
-        assert(adManager?.adPlaybackState?.getAdGroup()?.getAdBreak() != null)
-        assert(adManager?.adPlaybackState?.getAdGroup()?.getAdBreak()?.timeOffsetInSec == 0f)
-        assert(adManager?.adPlaybackState?.getAdGroup()?.getAdBreak()?.timeOffset == AdBreak.TimeOffsetTypes.START)
+        /** ad event listener is called with STARTED event **/
+        verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
+        adEventCaptorCount += 1
+        assert(adEventCaptor.value.getType() == AdEventType.STARTED)
+        reset(mockAdEventListener)
+
+        /** mark the state as playing and verify further events **/
+        adManager?.onPlay()
+        adManager?.adPlaybackState?.updateAdState(AdPlaybackState.AdState.PLAYING)
+        adManager?.previousAdProgress = Progress(500, 10000)
+        `when`(mockAdPlayer.getAdProgress()).thenReturn(Progress(1000, 10000))
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+
+        /** ad event listener is called with PROGRESS event **/
+        verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
+        adEventCaptorCount += 1
+        assert(adEventCaptor.value.getType() == AdEventType.PROGRESS)
+        reset(mockAdEventListener)
+
+        adManager?.onPlay()
+        adManager?.adPlaybackState?.updateAdState(AdPlaybackState.AdState.PLAYING)
+        adManager?.previousAdProgress = Progress(1000, 10000)
+        `when`(mockAdPlayer.getAdProgress()).thenReturn(Progress(3000, 10000))
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+
+        /** ad event listener is called with FIRST_QUARTILE event **/
+        verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
+        adEventCaptorCount += 1
+        assert(adEventCaptor.value.getType() == AdEventType.FIRST_QUARTILE)
+        reset(mockAdEventListener)
+
+        adManager?.onPlay()
+        adManager?.adPlaybackState?.updateAdState(AdPlaybackState.AdState.PLAYING)
+        adManager?.previousAdProgress = Progress(3000, 10000)
+        `when`(mockAdPlayer.getAdProgress()).thenReturn(Progress(5500, 10000))
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+
+        /** ad event listener is called with MIDPOINT event **/
+        verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
+        adEventCaptorCount += 1
+        assert(adEventCaptor.value.getType() == AdEventType.MIDPOINT)
+        reset(mockAdEventListener)
+
+        adManager?.onPlay()
+        adManager?.adPlaybackState?.updateAdState(AdPlaybackState.AdState.PLAYING)
+        adManager?.previousAdProgress = Progress(5500, 10000)
+        `when`(mockAdPlayer.getAdProgress()).thenReturn(Progress(8000, 10000))
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+
+        /** ad event listener is called with THIRD_QUARTILE event **/
+        verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
+        adEventCaptorCount += 1
+        assert(adEventCaptor.value.getType() == AdEventType.THIRD_QUARTILE)
+        reset(mockAdEventListener)
+
+        adManager?.onPlay()
+        adManager?.adPlaybackState?.updateAdState(AdPlaybackState.AdState.PLAYING)
+        adManager?.previousAdProgress = Progress(8000, 10000)
+        `when`(mockAdPlayer.getAdProgress()).thenReturn(Progress(9500, 10000))
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+
+        /** ad event listener is called with PROGRESS event **/
+        verify(mockAdEventListener, times(1)).onAdEvent(capture(adEventCaptor))
+        adEventCaptorCount += 1
+        assert(adEventCaptor.value.getType() == AdEventType.PROGRESS)
+        reset(mockAdEventListener)
+
+        /** ad ended **/
+        adManager?.onPlay()
+        adManager?.adPlaybackState?.updateAdState(AdPlaybackState.AdState.PLAYING)
+        adManager?.onEnded()
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+
+        /** verify ad renderer remove view is called once ad has ended **/
+        verify(mockAdRenderer, times(1)).removeView()
+
+        /** ad event listener is called with COMPLETED and CONTENT_RESUME_REQUESTED event **/
+        verify(mockAdEventListener, times(2)).onAdEvent(capture(adEventCaptor))
+        assert(adEventCaptor.allValues[adEventCaptorCount].getType() == AdEventType.COMPLETED)
+        assert(adEventCaptor.allValues[adEventCaptorCount + 1].getType() == AdEventType.CONTENT_RESUME_REQUESTED)
+        reset(mockAdEventListener)
     }
 }

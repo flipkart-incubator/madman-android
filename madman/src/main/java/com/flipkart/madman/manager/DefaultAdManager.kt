@@ -54,7 +54,7 @@ open class DefaultAdManager(
     }
 
     /** previous ad progress **/
-    private var previousAdProgress: Progress = Progress.UNDEFINED
+    var previousAdProgress: Progress = Progress.UNDEFINED
 
     private var currentAd: VastAd? = null
 
@@ -164,7 +164,7 @@ open class DefaultAdManager(
              */
             adPlaybackState.hasAdStarted() -> {
                 notifyAndTrackEvent(Event.AD_STARTED)
-                adPlaybackState.updateAdState(AdPlaybackState.AdState.PLAYING)
+                updateAdState(AdPlaybackState.AdState.PLAYING)
                 currentAd?.let {
                     adRenderer.renderView(it.getAdElement())
                 }
