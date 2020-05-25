@@ -58,10 +58,10 @@ open class DefaultAdRenderer private constructor(
     /** ad count down timer **/
     private var adCountDownTimer: CountDownTimer? = null
 
-    /** registered view callbacks **/
-    private val viewClickListeners: MutableList<ViewClickListener> = mutableListOf()
-
     private val viewHolders: MutableMap<View, AdViewHolder> = mutableMapOf()
+
+    /** registered view callbacks **/
+    val viewClickListeners: MutableList<ViewClickListener> = mutableListOf()
 
     init {
         player = builder.player
