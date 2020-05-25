@@ -50,6 +50,15 @@ interface AdRenderer : AdPlayerProvider {
     fun removeView()
 
     /**
+     * Called by [AdManager] to notify ad progress updates.
+     * You can use this method to listen to progress events and customise views such as showing count down timer etc
+     *
+     * @param progress of the ad
+     * @param duration of the ad
+     */
+    fun onAdProgressUpdate(progress: Float, duration: Float)
+
+    /**
      * destroy
      */
     fun destroy()

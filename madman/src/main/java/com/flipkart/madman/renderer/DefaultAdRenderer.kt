@@ -23,6 +23,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import com.flipkart.madman.helper.Utils
 import com.flipkart.madman.manager.helper.Constant
 import com.flipkart.madman.manager.model.AdElement
 import com.flipkart.madman.renderer.binder.AdViewBinder
@@ -54,9 +55,6 @@ open class DefaultAdRenderer private constructor(
 
     /** count down timer to show skip ad if skippable **/
     private var skipCountDownTimer: CountDownTimer? = null
-
-    /** ad count down timer **/
-    private var adCountDownTimer: CountDownTimer? = null
 
     private val viewHolders: MutableMap<View, AdViewHolder> = mutableMapOf()
 
@@ -208,25 +206,16 @@ open class DefaultAdRenderer private constructor(
      * @param duration of the ad
      */
     protected open fun configureAdCountDownView(view: TextView?, duration: Double) {
-        cancelAdCountDownTimer()
         view?.visibility = View.VISIBLE
-        adCountDownTimer =
-            object :
-                CountDownTimer(
-                    duration.toLong() * Constant.MILLISECOND_MULTIPLIER + 150,
-                    COUNT_DOWN_INTERVAL
-                ) {
-                override fun onFinish() {
-                }
+    }
 
-                override fun onTick(millisUntilFinished: Long) {
-                    var seconds = TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished)
-                    val minutes = (seconds % 3600) / 60
-                    seconds %= 60
-                    view?.text = String.format(AD_STARTING_IN_PLACEHOLDER, minutes, seconds)
-                }
-            }
-        adCountDownTimer?.start()
+    override fun onAdProgressUpdate(progress: Float, duration: Float) {
+        view?.let {
+            val adViewHolder = viewHolders[it]
+            val seconds = (duration - progress).toInt()
+            adViewHolder?.adCountDownView?.text =
+                String.format(AD_STARTING_IN_PLACEHOLDER, Utils.formatSecondsToMMSS(seconds))
+        }
     }
 
     override fun getRenderingSettings(): RenderingSettings {
@@ -243,7 +232,6 @@ open class DefaultAdRenderer private constructor(
 
     override fun destroy() {
         cancelSkipTimer()
-        cancelAdCountDownTimer()
         /** clear all maps **/
         viewClickListeners.clear()
         viewHolders.clear()
@@ -267,14 +255,6 @@ open class DefaultAdRenderer private constructor(
     private fun cancelSkipTimer() {
         skipCountDownTimer?.cancel()
         skipCountDownTimer = null
-    }
-
-    /**
-     * cancel the ad count down timer
-     */
-    private fun cancelAdCountDownTimer() {
-        adCountDownTimer?.cancel()
-        adCountDownTimer = null
     }
 
     class Builder {
@@ -305,7 +285,7 @@ open class DefaultAdRenderer private constructor(
     companion object {
         const val SKIP_AD_TEXT = "Skip Ad"
         const val SKIP_AD_STARTING_TEXT_PLACEHOLDER = "You can skip ad in %d"
-        const val AD_STARTING_IN_PLACEHOLDER = "Ad ending in %02d:%02d"
+        const val AD_STARTING_IN_PLACEHOLDER = "Ad ending in %s"
         const val LEARN_MORE_TEXT = "Learn more"
 
         const val COUNT_DOWN_INTERVAL = 1000L

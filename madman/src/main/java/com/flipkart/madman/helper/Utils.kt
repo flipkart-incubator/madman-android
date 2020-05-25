@@ -94,4 +94,10 @@ object Utils {
             throw IOException(e.message)
         }
     }
+
+    fun formatSecondsToMMSS(seconds: Int): String {
+        val minutes = (seconds % 3600) / 60
+        val remainingSeconds = seconds % 60
+        return "%02d:%02d".format(minutes, remainingSeconds)
+    }
 }

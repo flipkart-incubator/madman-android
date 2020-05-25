@@ -228,6 +228,7 @@ open class DefaultAdManager(
              * if previous percentage is less than current percentage, and progress is not [Progress.UNDEFINED], fire AD_PROGRESS event
              */
             previousPercentage <= percentage && progress != Progress.UNDEFINED -> {
+                adRenderer.onAdProgressUpdate(progress.currentTime, progress.duration)
                 notifyAndTrackEvent(Event.AD_PROGRESS)
             }
         }
