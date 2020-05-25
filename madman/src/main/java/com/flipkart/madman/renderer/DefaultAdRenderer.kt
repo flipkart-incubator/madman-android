@@ -212,7 +212,7 @@ open class DefaultAdRenderer private constructor(
     override fun onAdProgressUpdate(progress: Float, duration: Float) {
         view?.let {
             val adViewHolder = viewHolders[it]
-            val seconds = (duration - progress).toInt()
+            val seconds = TimeUnit.SECONDS.toSeconds((duration - progress).toLong())
             adViewHolder?.adCountDownView?.text =
                 String.format(AD_STARTING_IN_PLACEHOLDER, Utils.formatSecondsToMMSS(seconds))
         }
