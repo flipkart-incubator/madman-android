@@ -15,7 +15,6 @@
  */
 package com.flipkart.madman.renderer
 
-import android.widget.TextView
 import com.flipkart.madman.manager.model.AdElement
 import com.flipkart.madman.renderer.callback.ViewClickListener
 import com.flipkart.madman.renderer.player.AdPlayerProvider
@@ -51,30 +50,9 @@ interface AdRenderer : AdPlayerProvider {
     fun removeView()
 
     /**
-     * toggle the view visibility
-     */
-    fun toggleViewVisibility(show: Boolean)
-
-    /**
      * destroy
      */
     fun destroy()
-
-    /**
-     * configure the skip ad ui view, optional
-     */
-    fun configureSkipAdView(
-        view: TextView?,
-        canSkip: Boolean,
-        skipOffset: Double,
-        duration: Double
-    ) {
-    }
-
-    /**
-     * configure the click through view, optional
-     */
-    fun configureClickThroughView(view: TextView?, url: String?) {}
 
     /**
      * register [ViewClickListener]

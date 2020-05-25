@@ -209,19 +209,19 @@ open class DefaultAdManager(
             /**
              * if previous percentage is less than 0.25F and current percentage is greater than 0.25F, fire the FIRST_QUARTILE event
              */
-            previousPercentage < FIRST_QUARTILE && percentage > FIRST_QUARTILE -> {
+            previousPercentage < FIRST_QUARTILE && percentage > FIRST_QUARTILE && progress != Progress.UNDEFINED -> {
                 notifyAndTrackEvent(Event.FIRST_QUARTILE)
             }
             /**
              * if previous percentage is less than 0.50F and current percentage is greater than 0.50F, fire the MIDPOINT event
              */
-            previousPercentage < MIDPOINT && percentage > MIDPOINT -> {
+            previousPercentage < MIDPOINT && percentage > MIDPOINT && progress != Progress.UNDEFINED -> {
                 notifyAndTrackEvent(Event.MIDPOINT)
             }
             /**
              * if previous percentage is less than 0.75F and current percentage is greater than 0.75F, fire the THIRD_QUARTILE event
              */
-            previousPercentage < THIRD_QUARTILE && percentage > THIRD_QUARTILE -> {
+            previousPercentage < THIRD_QUARTILE && percentage > THIRD_QUARTILE && progress != Progress.UNDEFINED -> {
                 notifyAndTrackEvent(Event.THIRD_QUARTILE)
             }
             /**

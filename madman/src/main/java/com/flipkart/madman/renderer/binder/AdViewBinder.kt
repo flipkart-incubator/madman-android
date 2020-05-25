@@ -33,13 +33,13 @@ class AdViewBinder private constructor(builder: Builder) {
     /** click through id eg learn more **/
     var clickThroughViewId: Int? = null
 
-    /** ad starting in button id **/
-    var adStartingInViewId: Int? = null
+    /** ad count down in button id **/
+    var adCountDownViewId: Int? = null
 
     init {
         layoutToInflateId = builder.layoutToInflateId
         skipViewId = builder.skipViewId
-        adStartingInViewId = builder.adStartingInViewId
+        adCountDownViewId = builder.adCountDownViewId
         clickThroughViewId = builder.clickThroughViewId
     }
 
@@ -47,7 +47,7 @@ class AdViewBinder private constructor(builder: Builder) {
         internal var skipViewId: Int = R.id.skip_view
         internal var clickThroughViewId: Int = R.id.click_through
         internal var layoutToInflateId: Int = R.layout.ad_layout
-        internal var adStartingInViewId: Int = R.id.ad_starting_in_view
+        internal var adCountDownViewId: Int = R.id.ad_count_down
 
         fun setLayoutId(id: Int): Builder {
             this.layoutToInflateId = id
@@ -61,11 +61,6 @@ class AdViewBinder private constructor(builder: Builder) {
 
         fun setClickThroughViewId(id: Int): Builder {
             this.clickThroughViewId = id
-            return this
-        }
-
-        fun setAdStartingInViewId(id: Int): Builder {
-            this.adStartingInViewId = id
             return this
         }
 

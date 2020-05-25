@@ -16,9 +16,7 @@
 package com.flipkart.madman.manager.helper
 
 object Constant {
-    /**
-     * Represents an unset or unknown index.
-     */
+    /** Represents an unset or unknown index. **/
     const val INDEX_UNSET = -1
 
     /** first quartile in float **/
@@ -29,6 +27,8 @@ object Constant {
 
     /** third quartile in float **/
     const val THIRD_QUARTILE = 0.75F
+
+    const val MILLISECOND_MULTIPLIER = 1000
 
     /** error code macro **/
     const val ERROR_CODE_MACRO = "[ERRORCODE]"

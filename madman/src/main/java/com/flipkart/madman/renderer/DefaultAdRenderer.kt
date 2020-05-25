@@ -23,6 +23,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import com.flipkart.madman.manager.helper.Constant
 import com.flipkart.madman.manager.model.AdElement
 import com.flipkart.madman.renderer.binder.AdViewBinder
 import com.flipkart.madman.renderer.binder.AdViewHolder
@@ -53,6 +54,9 @@ open class DefaultAdRenderer private constructor(
 
     /** count down timer to show skip ad if skippable **/
     private var skipCountDownTimer: CountDownTimer? = null
+
+    /** ad count down timer **/
+    private var adCountDownTimer: CountDownTimer? = null
 
     /** registered view callbacks **/
     private val viewClickListeners: MutableList<ViewClickListener> = mutableListOf()
@@ -96,6 +100,9 @@ open class DefaultAdRenderer private constructor(
                 }
             }
 
+            /** configure ad count down view **/
+            configureAdCountDownView(adViewHolder?.adCountDownView, adElement.getDuration())
+
             /** configure skip ad view **/
             configureSkipAdView(
                 adViewHolder?.skipView,
@@ -108,17 +115,32 @@ open class DefaultAdRenderer private constructor(
             configureClickThroughView(
                 adViewHolder?.clickThroughView,
                 adElement.getClickThroughUrl()
-            )
+            ) { url ->
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.data = Uri.parse(url)
+
+                val chooser = Intent.createChooser(intent, "Open with")
+                if (intent.resolveActivity(container.context.packageManager) != null) {
+                    container.context.startActivity(chooser)
+                }
+            }
         }
     }
 
-    override fun configureSkipAdView(
+    /**
+     * configure the skip ad view
+     *
+     * @param view the skip ad text view
+     * @param canSkip if the ad can be skipped
+     * @param skipOffset when to skip the ad
+     * @param duration of the ad
+     */
+    protected open fun configureSkipAdView(
         view: TextView?,
         canSkip: Boolean,
         skipOffset: Double,
         duration: Double
     ) {
-        super.configureSkipAdView(view, canSkip, skipOffset, duration)
         if (canSkip) {
             /** attach listener for skip ad view **/
             view?.setOnClickListener {
@@ -126,11 +148,14 @@ open class DefaultAdRenderer private constructor(
                     viewCallback.onSkipAdClick()
                 }
             }
-            cancelTimer()
+            cancelSkipTimer()
             view?.visibility = View.VISIBLE
             view?.isEnabled = false
             skipCountDownTimer =
-                object : CountDownTimer((duration - skipOffset).toLong() * 1000 + 150, 1000) {
+                object : CountDownTimer(
+                    (duration - skipOffset).toLong() * Constant.MILLISECOND_MULTIPLIER + 150,
+                    COUNT_DOWN_INTERVAL
+                ) {
                     override fun onFinish() {
                         view?.text = SKIP_AD_TEXT
                         view?.isEnabled = true
@@ -149,21 +174,24 @@ open class DefaultAdRenderer private constructor(
         }
     }
 
-    override fun configureClickThroughView(view: TextView?, url: String?) {
-        super.configureClickThroughView(view, url)
+    /**
+     * configure the click through view
+     *
+     * @param view the learn more view
+     * @param url the click through url
+     * @param onClick callback when the view is clicked
+     */
+    protected open fun configureClickThroughView(
+        view: TextView?,
+        url: String?,
+        onClick: (url: String?) -> Unit
+    ) {
         if (!TextUtils.isEmpty(url)) {
             /** url is not empty, configure view **/
             view?.visibility = View.VISIBLE
             view?.text = LEARN_MORE_TEXT
             view?.setOnClickListener {
-                val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = Uri.parse(url)
-
-                val chooser = Intent.createChooser(intent, "Open with")
-                if (intent.resolveActivity(view.context.packageManager) != null) {
-                    view.context.startActivity(chooser)
-                }
-
+                onClick(url)
                 for (viewCallback in viewClickListeners) {
                     viewCallback.onClickThroughClick()
                 }
@@ -171,6 +199,34 @@ open class DefaultAdRenderer private constructor(
         } else {
             view?.visibility = View.GONE
         }
+    }
+
+    /**
+     * configure the ad count down view
+     *
+     * @param view the ad count down view
+     * @param duration of the ad
+     */
+    protected open fun configureAdCountDownView(view: TextView?, duration: Double) {
+        cancelAdCountDownTimer()
+        view?.visibility = View.VISIBLE
+        adCountDownTimer =
+            object :
+                CountDownTimer(
+                    duration.toLong() * Constant.MILLISECOND_MULTIPLIER + 150,
+                    COUNT_DOWN_INTERVAL
+                ) {
+                override fun onFinish() {
+                }
+
+                override fun onTick(millisUntilFinished: Long) {
+                    var seconds = TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished)
+                    val minutes = (seconds % 3600) / 60
+                    seconds %= 60
+                    view?.text = String.format(AD_STARTING_IN_PLACEHOLDER, minutes, seconds)
+                }
+            }
+        adCountDownTimer?.start()
     }
 
     override fun getRenderingSettings(): RenderingSettings {
@@ -186,7 +242,8 @@ open class DefaultAdRenderer private constructor(
     }
 
     override fun destroy() {
-        cancelTimer()
+        cancelSkipTimer()
+        cancelAdCountDownTimer()
         /** clear all maps **/
         viewClickListeners.clear()
         viewHolders.clear()
@@ -196,7 +253,7 @@ open class DefaultAdRenderer private constructor(
         container.removeView(view)
     }
 
-    override fun toggleViewVisibility(show: Boolean) {
+    private fun toggleViewVisibility(show: Boolean) {
         if (show) {
             view?.visibility = View.VISIBLE
         } else {
@@ -205,11 +262,19 @@ open class DefaultAdRenderer private constructor(
     }
 
     /**
-     * cancel the timer
+     * cancel the skip timer
      */
-    private fun cancelTimer() {
+    private fun cancelSkipTimer() {
         skipCountDownTimer?.cancel()
         skipCountDownTimer = null
+    }
+
+    /**
+     * cancel the ad count down timer
+     */
+    private fun cancelAdCountDownTimer() {
+        adCountDownTimer?.cancel()
+        adCountDownTimer = null
     }
 
     class Builder {
@@ -240,6 +305,9 @@ open class DefaultAdRenderer private constructor(
     companion object {
         const val SKIP_AD_TEXT = "Skip Ad"
         const val SKIP_AD_STARTING_TEXT_PLACEHOLDER = "You can skip ad in %d"
+        const val AD_STARTING_IN_PLACEHOLDER = "Ad ending in %02d:%02d"
         const val LEARN_MORE_TEXT = "Learn more"
+
+        const val COUNT_DOWN_INTERVAL = 1000L
     }
 }
