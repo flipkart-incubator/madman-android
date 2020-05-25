@@ -137,7 +137,7 @@ If you are using exo-player, you can directly use the MadmanAdLoader plugin whic
 
 ```kotlin
 dependencies {
-   implementation 'com.github.flipkart-incubator.madman:madman-exoplayer-extension:$latest_version'
+   implementation 'com.github.flipkart-incubator.madman-android:madman-exoplayer-extension:$latest_version'
 }
 ```
 
