@@ -1,0 +1,12 @@
+codecov:
+  notify:
+    require_ci_to_pass: true
+    after_n_builds: 1  # send notifications after the first upload
+    wait_for_ci: true
+
+coverage:
+  precision: 3
+  round: down
+  range: "70...100"
+
+comment: true
