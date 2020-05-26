@@ -77,10 +77,8 @@ dependencies {
 
 ```kotlin
 val madman = Madman.Builder()
-              .setAdErrorListener(this) // ad error callbacks
               .setAdLoadListener(this) // ad load callbacks
               .setNetworkLayer(DefaultNetworkLayer(context)) // use the default network layer, override if necessary
-              .setAdEventListener(this) // ad event callbacks
               .build(context)
 ```
 
@@ -130,6 +128,14 @@ request.setResponse(adResponse)
 madman.requestAds(request, adRenderer)
 ```
 
+The `AdLoadListener#onAdManagerLoaded` is called when the AdManager is initialised. The AdManager which is available as a parameter of the callback should be used to interact with the library.
+
+For example:
+```kotlin
+adManager.addAdEventListener(eventListener) // to listen to add events
+adManager.addAdErrorListener(errorListener) // to listen to add errors
+```
+
 
 ## Exo-Player Integration
 
@@ -170,6 +176,7 @@ The following features of VAST and VMAP are not available in the library yet:
 
 ### VMAP
 * Ad break time-offsets such as #1, x% etc. Only format supported for now is HH:MM:SS.mmm
+* Ad break tracking events
 * Increasing unit test coverage
 
 `Note: Google AdSense/AdManager Ads will not work with this library due to the absense of executable media files support`
