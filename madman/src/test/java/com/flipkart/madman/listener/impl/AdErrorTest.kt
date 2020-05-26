@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.flipkart.madman.network.model
+package com.flipkart.madman.listener.impl
 
-/**
- * A plain request with headers
- */
-interface Request {
-    var requestType: RequestType
+import com.flipkart.madman.component.enums.AdErrorType
+import org.junit.Test
 
-    enum class RequestType {
-        VMAP, VAST
+class AdErrorTest {
+
+    @Test
+    fun testSettersAndGetters() {
+        val adError = AdError(AdErrorType.AD_ERROR, "ad error")
+        assert(adError.getType() == AdErrorType.AD_ERROR)
+        assert(adError.getMessage() == "ad error")
     }
 }

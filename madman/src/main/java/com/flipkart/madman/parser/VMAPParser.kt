@@ -118,10 +118,19 @@ class VMAPParser(private var pullParser: XmlPullParser, private var vastParser: 
 
             var currentPodIndex =
                 if (adBreaks.any { it.timeOffset == AdBreak.TimeOffsetTypes.START }) 0 else 1
-            adBreaks.forEach {
-                it.podIndex = currentPodIndex
-                currentPodIndex += 1
+            var previousAdBreak: AdBreak? = adBreaks.first()
+            for (adBreak in adBreaks) {
+                if (previousAdBreak?.timeOffset != adBreak.timeOffset) {
+                    currentPodIndex += 1
+                }
+                adBreak.podIndex = currentPodIndex
+                previousAdBreak = adBreak
             }
+
+//            adBreaks.forEach {
+//                it.podIndex = currentPodIndex
+//                currentPodIndex += 1
+//            }
 
             vmap.adBreaks = if (adBreaks.size > 0) adBreaks else null
 

@@ -25,8 +25,8 @@ class AdViewHolder {
     /** skip view **/
     var skipView: TextView? = null
 
-    /** ad starting in view **/
-    var adStartingIn: TextView? = null
+    /** ad count down view **/
+    var adCountDownView: TextView? = null
 
     /** click through view **/
     var clickThroughView: TextView? = null
@@ -35,8 +35,8 @@ class AdViewHolder {
         skipView = binder.skipViewId?.let { container.findViewById(it) }
         skipView?.visibility = View.GONE
 
-        adStartingIn = binder.adStartingInViewId?.let { container.findViewById(it) }
-        adStartingIn?.visibility = View.GONE
+        adCountDownView = binder.adCountDownViewId?.let { container.findViewById(it) }
+        adCountDownView?.visibility = View.GONE
 
         clickThroughView = binder.clickThroughViewId?.let { container.findViewById(it) }
         clickThroughView?.visibility = View.GONE

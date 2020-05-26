@@ -21,6 +21,17 @@ import com.flipkart.madman.manager.AdManager
  * Ad manager load listener callback
  */
 interface AdLoadListener {
-    /** called when ads manager is loaded **/
+    /**
+     * Called when [AdManager] is loaded
+     *
+     * @param AdManager to interact with
+     */
     fun onAdManagerLoaded(manager: AdManager)
+
+    /**
+     * Called when [AdManager] load failed
+     *
+     * @param AdErrorListener.AdError which contains the error type and error message
+     */
+    fun onAdManagerLoadFailed(error: AdErrorListener.AdError)
 }

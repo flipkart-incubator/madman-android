@@ -16,13 +16,14 @@
 package com.flipkart.madman.manager.data.providers
 
 import com.flipkart.madman.component.enums.AdErrorType
-import com.flipkart.madman.component.enums.StringErrorConstants
 import com.flipkart.madman.component.model.vmap.AdBreak
 import com.flipkart.madman.component.model.vmap.AdSource
 import com.flipkart.madman.component.model.vmap.AdTagURI
 import com.flipkart.madman.loader.AdLoader
 import com.flipkart.madman.manager.data.VastAdProvider
+import com.flipkart.madman.manager.event.Error
 import com.flipkart.madman.network.model.NetworkAdRequest
+import com.flipkart.madman.network.model.Request
 
 /**
  * Implementation of [VastAdProvider] which interacts with the ad loader and network layer to fetch the vast ads.
@@ -35,43 +36,44 @@ class NetworkVastAdProvider(private val adLoader: AdLoader<NetworkAdRequest>) :
         adBreak.adSource?.adTagURI?.let {
             val adUrl = it.url
             adUrl?.let {
-                adLoader.requestAds(NetworkAdRequest().apply {
-                    url = adUrl
-                }, { vmap ->
-                    /**
-                     * The vast data gets wrapped in the VMAP model with one ad break
-                     */
-                    val firstAdBreak = vmap.adBreaks?.get(0)
-                    firstAdBreak?.adSource?.vastAdData?.let { vast ->
-                        /** throw error if vast has no ads to play **/
-                        if (vast.ads?.isNotEmpty() == true) {
-                            listener.onVastFetchSuccess(vast)
-                        } else {
+                adLoader.requestAds(
+                    NetworkAdRequest(adUrl, Request.RequestType.VAST),
+                    { vmap ->
+                        /**
+                         * The vast data gets wrapped in the VMAP model with one ad break
+                         */
+                        val firstAdBreak = vmap.adBreaks?.get(0)
+                        firstAdBreak?.adSource?.vastAdData?.let { vast ->
+                            /** throw error if vast has no ads to play **/
+                            if (vast.ads?.isNotEmpty() == true) {
+                                listener.onVastFetchSuccess(vast)
+                            } else {
+                                listener.onVastFetchError(
+                                    AdErrorType.NO_AD,
+                                    "no ad from the given $adUrl"
+                                )
+                            }
+                        } ?: run {
                             listener.onVastFetchError(
-                                AdErrorType.NO_AD,
-                                "no ad from the given $adUrl"
+                                AdErrorType.EMPTY_VAST_RESPONSE,
+                                "no vast from the given $adUrl"
                             )
                         }
-                    } ?: run {
+                    },
+                    { adErrorType: AdErrorType, message: String? ->
                         listener.onVastFetchError(
-                            AdErrorType.EMPTY_VAST_RESPONSE,
-                            "no vast from the given $adUrl"
+                            adErrorType,
+                            message ?: Error.UNIDENTIFIED_ERROR.errorMessage
                         )
-                    }
-                }, { adErrorType: AdErrorType, message: String? ->
-                    listener.onVastFetchError(
-                        adErrorType,
-                        message ?: StringErrorConstants.GENERIC_ERROR
-                    )
-                })
+                    })
             } ?: run {
                 listener.onVastFetchError(
-                    AdErrorType.VAST_ERROR,
+                    AdErrorType.UNKNOWN_ERROR,
                     "no url to fetch ads for $adBreak"
                 )
             }
         } ?: run {
-            listener.onVastFetchError(AdErrorType.VAST_ERROR, "no AdTagURI for $adBreak")
+            listener.onVastFetchError(AdErrorType.UNKNOWN_ERROR, "no AdTagURI for $adBreak")
         }
     }
 }

@@ -15,74 +15,67 @@
  */
 package com.flipkart.madman.manager.helper
 
+import com.flipkart.madman.component.enums.AdErrorType
 import com.flipkart.madman.component.model.common.Tracking
+import com.flipkart.madman.manager.event.Error
 import com.flipkart.madman.manager.event.Event
+import com.flipkart.madman.manager.model.AdElement
 import com.flipkart.madman.manager.model.VastAd
 import com.flipkart.madman.manager.tracking.TrackingHandler
 
 /**
  * Tracking helper class
  */
-class TrackingEventHelper(
-    private var trackingHandler: TrackingHandler
-) {
+class TrackingEventHelper(private var trackingHandler: TrackingHandler) {
 
     fun setTrackingHandler(trackingHandler: TrackingHandler) {
         this.trackingHandler = trackingHandler
     }
 
-    fun handleEvent(eventType: Event, ad: VastAd?, errorCode: Int? = null) {
+    fun handleEvent(eventType: Event, ad: VastAd?) {
         val adTracking: VastAd.AdTracking? = ad?.getAdTracking()
         val trackingMap: Map<Tracking.TrackingEvent, List<String>>? = adTracking?.getAdTrackingMap()
+        val adElement = ad?.getAdElement()
 
         when (eventType) {
             Event.AD_STARTED -> {
-                track(Tracking.TrackingEvent.START, trackingMap)
-                track(adTracking?.getAdImpressionUrls())
+                track(Tracking.TrackingEvent.START, trackingMap, adElement)
+                track(
+                    Tracking.TrackingEvent.IMPRESSION,
+                    adTracking?.getAdImpressionUrls(),
+                    adElement
+                )
             }
             Event.FIRST_QUARTILE -> {
-                track(Tracking.TrackingEvent.FIRST_QUARTILE, trackingMap)
+                track(Tracking.TrackingEvent.FIRST_QUARTILE, trackingMap, adElement)
             }
             Event.MIDPOINT -> {
-                track(Tracking.TrackingEvent.MIDPOINT, trackingMap)
+                track(Tracking.TrackingEvent.MIDPOINT, trackingMap, adElement)
+            }
+            Event.AD_PROGRESS -> {
+                // todo: send ad progress tracking events if present with offset
             }
             Event.THIRD_QUARTILE -> {
-                track(Tracking.TrackingEvent.THIRD_QUARTILE, trackingMap)
+                track(Tracking.TrackingEvent.THIRD_QUARTILE, trackingMap, adElement)
             }
             Event.AD_COMPLETED -> {
-                track(Tracking.TrackingEvent.COMPLETE, trackingMap)
+                track(Tracking.TrackingEvent.COMPLETE, trackingMap, adElement)
             }
             Event.AD_SKIPPED -> {
-                track(Tracking.TrackingEvent.SKIP, trackingMap)
+                track(Tracking.TrackingEvent.SKIP, trackingMap, adElement)
             }
             Event.PAUSE_AD -> {
-                track(Tracking.TrackingEvent.PAUSE, trackingMap)
+                track(Tracking.TrackingEvent.PAUSE, trackingMap, adElement)
             }
             Event.RESUME_AD -> {
-                track(Tracking.TrackingEvent.RESUME, trackingMap)
+                track(Tracking.TrackingEvent.RESUME, trackingMap, adElement)
             }
             Event.AD_CTA_CLICKED -> {
-                track(adTracking?.getClickThroughTracking())
-            }
-            Event.AD_ERROR -> {
-                val adErrorUrls = adTracking?.getAdErrorUrls()
-                errorCode?.let {
-                    /** replace macro with error code **/
-                    trackForError(it, adErrorUrls)
-                } ?: run {
-                    /** error code null, track original url **/
-                    track(adErrorUrls)
-                }
-            }
-            Event.VAST_ERROR -> {
-                val vastErrorUrls = adTracking?.getVastErrorUrls()
-                errorCode?.let {
-                    /** replace macro with error code **/
-                    trackForError(it, vastErrorUrls)
-                } ?: run {
-                    /** error code null, track original url **/
-                    track(vastErrorUrls)
-                }
+                track(
+                    Tracking.TrackingEvent.CLICK_THROUGH,
+                    adTracking?.getClickThroughTracking(),
+                    adElement
+                )
             }
             else -> {
                 // do nothing
@@ -90,28 +83,58 @@ class TrackingEventHelper(
         }
     }
 
-    private fun track(
-        event: Tracking.TrackingEvent,
-        trackingMap: Map<Tracking.TrackingEvent, List<String>>?
-    ) {
-        trackingHandler.trackEvent(event, trackingMap?.get(event))
-    }
+    fun handleError(error: AdErrorType, ad: VastAd?) {
+        val adTracking: VastAd.AdTracking? = ad?.getAdTracking()
+        val adElement = ad?.getAdElement()
+        val errorCode = Error.mapErrorTypeToError(error).errorCode
 
-    private fun track(url: String?) {
-        trackingHandler.trackEvent(url)
-    }
-
-    private fun trackForError(errorCode: Int, urlList: List<String>?) {
-        urlList?.forEach {
-            val replacedError =
-                it.replace(Constant.ERROR_CODE_MACRO, errorCode.toString())
-            track(replacedError)
+        when (error) {
+            AdErrorType.NO_MEDIA_URL,
+            AdErrorType.NO_AD -> {
+                adTracking?.getVastErrorUrls()?.let {
+                    val replacedUrls = replaceWithErrorCode(it, errorCode)
+                    track(Tracking.TrackingEvent.ERROR, replacedUrls, adElement)
+                }
+            }
+            else -> {
+                adTracking?.getAdErrorUrls()?.let {
+                    val replacedUrls = replaceWithErrorCode(it, errorCode)
+                    track(Tracking.TrackingEvent.ERROR, replacedUrls, adElement)
+                }
+            }
         }
     }
 
-    private fun track(urlList: List<String>?) {
-        urlList?.forEach {
-            track(it)
+    private fun track(
+        event: Tracking.TrackingEvent,
+        trackingMap: Map<Tracking.TrackingEvent, List<String>>?,
+        ad: AdElement?
+    ) {
+        val urls = trackingMap?.get(event)
+        urls?.let {
+            trackingHandler.trackEvent(urls, event, ad)
+        }
+    }
+
+    private fun track(
+        event: Tracking.TrackingEvent,
+        urls: List<String>?,
+        ad: AdElement?
+    ) {
+        urls?.let {
+            trackingHandler.trackEvent(urls, event, ad)
+        }
+    }
+
+    private fun replaceWithErrorCode(urls: List<String>, errorCode: Int?): List<String> {
+        errorCode?.let {
+            val replacedUrls = ArrayList<String>(urls.size)
+            urls.forEach {
+                replacedUrls.add(it.replace(Constant.ERROR_CODE_MACRO, errorCode.toString()))
+            }
+            return replacedUrls
+        } ?: run {
+            return urls
         }
     }
 }

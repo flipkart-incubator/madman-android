@@ -15,28 +15,64 @@
  */
 package com.flipkart.madman.manager
 
+import com.flipkart.madman.listener.AdErrorListener
+import com.flipkart.madman.listener.AdEventListener
+import com.flipkart.madman.manager.data.VastAdProvider
 import com.flipkart.madman.manager.finder.AdBreakFinder
 import com.flipkart.madman.manager.tracking.TrackingHandler
 import com.flipkart.madman.provider.ContentProgressProvider
 
-interface AdManager {
+interface AdManager : PlayableAdManager {
+    /**
+     * Initializes the [AdManager]
+     *
+     * @param [ContentProgressProvider] provider which returns the content progress
+     */
     fun init(contentProgressProvider: ContentProgressProvider)
 
-    fun init(contentProgressProvider: ContentProgressProvider, adBreakFinder: AdBreakFinder)
+    /**
+     * Initializes the [AdManager]
+     *
+     * @param [ContentProgressProvider] provider which returns the content progress
+     * @param [AdBreakFinder] to find the ad break to play
+     * @param [VastAdProvider] which provides the vast ad
+     */
+    fun init(
+        contentProgressProvider: ContentProgressProvider,
+        adBreakFinder: AdBreakFinder,
+        vastAdProvider: VastAdProvider
+    )
 
-    fun start()
+    /**
+     * Adds an [AdEventListener] to receive ad events
+     *
+     * @param [AdEventListener] to add
+     */
+    fun addAdEventListener(listener: AdEventListener)
 
-    fun pause()
+    /**
+     * Removes an already added [AdEventListener]
+     *
+     * @param [AdEventListener] to remove
+     */
+    fun removeAdEventListener(listener: AdEventListener)
 
-    fun resume()
+    /**
+     * Adds an [AdErrorListener] to receive ad error events
+     *
+     * @param [AdErrorListener] to add
+     */
+    fun addAdErrorListener(listener: AdErrorListener)
 
-    fun destroy()
+    /**
+     * Removes an already added [AdErrorListener]
+     *
+     * @param [AdErrorListener] to remove
+     */
+    fun removeAdErrorListener(listener: AdErrorListener)
 
-    fun contentComplete()
-
-    fun getCuePoints(): List<Float>
-
-    fun addTrackingHandler(handler: TrackingHandler) {
-        // override it if required
-    }
+    /**
+     * Override the [TrackingHandler]
+     */
+    fun addTrackingHandler(handler: TrackingHandler) {}
 }

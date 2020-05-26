@@ -15,7 +15,6 @@
  */
 package com.flipkart.madman.renderer
 
-import android.widget.TextView
 import com.flipkart.madman.manager.model.AdElement
 import com.flipkart.madman.renderer.callback.ViewClickListener
 import com.flipkart.madman.renderer.player.AdPlayerProvider
@@ -51,25 +50,18 @@ interface AdRenderer : AdPlayerProvider {
     fun removeView()
 
     /**
+     * Called by [AdManager] to notify ad progress updates.
+     * You can use this method to listen to progress events and customise views such as showing count down timer etc
+     *
+     * @param progress of the ad
+     * @param duration of the ad
+     */
+    fun onAdProgressUpdate(progress: Float, duration: Float)
+
+    /**
      * destroy
      */
     fun destroy()
-
-    /**
-     * configure the skip ad ui view, optional
-     */
-    fun configureSkipAdView(
-        view: TextView?,
-        canSkip: Boolean,
-        skipOffset: Double,
-        duration: Double
-    ) {
-    }
-
-    /**
-     * configure the click through view, optional
-     */
-    fun configureClickThroughView(view: TextView?, url: String?) {}
 
     /**
      * register [ViewClickListener]

@@ -44,13 +44,20 @@ class NetworkAdLoader(
             override fun onSuccess(statusCode: Int, result: String?) {
                 result?.let {
                     /** response exists, delegate to parser **/
-                    parseResponse(it, onSuccess, onFailure)
+                    parseResponse(param, it, onSuccess, onFailure)
                 } ?: run {
                     /** response is null, throw error **/
-                    onFailure(
-                        AdErrorType.EMPTY_VMAP_RESPONSE,
-                        "Empty vmap response for ${param.url}"
-                    )
+                    if (isRequestTypeVMAP(param)) {
+                        onFailure(
+                            AdErrorType.EMPTY_VMAP_RESPONSE,
+                            "Empty vmap response for ${param.url}"
+                        )
+                    } else {
+                        onFailure(
+                            AdErrorType.EMPTY_VAST_RESPONSE,
+                            "Empty vast response for ${param.url}"
+                        )
+                    }
                 }
             }
 

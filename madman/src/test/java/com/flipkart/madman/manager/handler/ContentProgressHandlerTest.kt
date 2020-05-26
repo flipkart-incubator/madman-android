@@ -16,6 +16,7 @@
 
 package com.flipkart.madman.manager.handler
 
+import com.flipkart.madman.provider.AdProgressProvider
 import com.flipkart.madman.provider.ContentProgressProvider
 import com.flipkart.madman.provider.Progress
 import com.flipkart.madman.testutils.anyObject
@@ -36,10 +37,13 @@ import org.robolectric.annotation.Config
 class ContentProgressHandlerTest {
 
     @Mock
+    private lateinit var adProgressProvider: AdProgressProvider
+
+    @Mock
     private lateinit var contentProgressProvider: ContentProgressProvider
 
     @Mock
-    private lateinit var progressUpdateListener: ContentProgressHandler.ContentProgressUpdateListener
+    private lateinit var progressUpdateListener: ContentProgressUpdateListener
 
     @Before
     fun setUp() {
@@ -51,46 +55,47 @@ class ContentProgressHandlerTest {
      */
     @Test
     fun testListenerIsCalledOnProgressUpdate() {
-        val progressHandler = ContentProgressHandler(contentProgressProvider)
-        progressHandler.setListener(progressUpdateListener)
+        val progressHandler = ProgressHandler(contentProgressProvider, adProgressProvider, null)
+        progressHandler.setContentProgressListener(progressUpdateListener)
 
         Mockito.`when`(contentProgressProvider.getContentProgress()).thenReturn(Progress(10, 200))
 
-        progressHandler.sendMessage()
+        progressHandler.sendMessageFor(ProgressHandler.MessageCode.CONTENT_MESSAGE)
         /** verify listener is called once **/
         Mockito.verify(progressUpdateListener, Mockito.times(1))
             .onContentProgressUpdate(anyObject())
 
         Mockito.reset(progressUpdateListener)
 
-        progressHandler.sendMessage()
-        progressHandler.sendMessage()
-        progressHandler.sendMessage()
+        progressHandler.sendMessageFor(ProgressHandler.MessageCode.CONTENT_MESSAGE)
+        progressHandler.sendMessageFor(ProgressHandler.MessageCode.CONTENT_MESSAGE)
+        progressHandler.sendMessageFor(ProgressHandler.MessageCode.CONTENT_MESSAGE)
         /** verify listener is called thrice **/
         Mockito.verify(progressUpdateListener, Mockito.times(3))
             .onContentProgressUpdate(anyObject())
 
         Mockito.reset(progressUpdateListener)
 
-        progressHandler.removeListener(progressUpdateListener)
-        progressHandler.sendMessage()
+        progressHandler.removeContentProgressListeners()
+        progressHandler.sendMessageFor(ProgressHandler.MessageCode.CONTENT_MESSAGE)
         /** verify listener is not called as not listeners attached **/
         Mockito.verify(progressUpdateListener, Mockito.times(0))
             .onContentProgressUpdate(anyObject())
 
         Mockito.reset(progressUpdateListener)
 
-        progressHandler.setListener(progressUpdateListener)
-        progressHandler.removeMessages()
-        progressHandler.sendMessage()
+        progressHandler.setContentProgressListener(progressUpdateListener)
+        progressHandler.removeMessagesFor(ProgressHandler.MessageCode.CONTENT_MESSAGE)
+        progressHandler.sendMessageFor(ProgressHandler.MessageCode.CONTENT_MESSAGE)
+
         /** verify listener is called once **/
         Mockito.verify(progressUpdateListener, Mockito.times(1))
             .onContentProgressUpdate(anyObject())
 
         Mockito.reset(progressUpdateListener)
 
-        progressHandler.sendMessage()
-        progressHandler.removeMessages()
+        progressHandler.sendMessageFor(ProgressHandler.MessageCode.CONTENT_MESSAGE)
+        progressHandler.removeMessagesFor(ProgressHandler.MessageCode.CONTENT_MESSAGE)
         /** verify listener is called once **/
         Mockito.verify(progressUpdateListener, Mockito.times(1))
             .onContentProgressUpdate(anyObject())

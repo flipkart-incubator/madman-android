@@ -32,8 +32,8 @@ class IMAPlayerActivity : AppCompatActivity() {
         playerView = findViewById(R.id.video_view);
         player = IMAPlayerManager(
             this,
-            intent.extras?.get("url") as? String,
-            intent.extras?.get("response") as? String
+            intent.extras?.get("url").toString(),
+            intent.extras?.get("response").toString()
         );
     }
 

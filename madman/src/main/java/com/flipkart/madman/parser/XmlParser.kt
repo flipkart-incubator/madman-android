@@ -27,6 +27,7 @@ import com.flipkart.madman.parser.helper.ParserErrorCode
 import com.flipkart.madman.parser.helper.XmlParserHelper
 import com.flipkart.madman.parser.helper.XmlParserHelper.skip
 import org.xmlpull.v1.XmlPullParser
+import org.xmlpull.v1.XmlPullParserException
 import java.io.IOException
 import java.io.StringReader
 import java.util.concurrent.Executor
@@ -86,12 +87,17 @@ class XmlParser private constructor(
                     /** post on main thread **/
                     listener.onFailure(ParserErrorCode.PARSING_ERROR, e.message)
                 }
+            } catch (e: XmlPullParserException) {
+                handler.post {
+                    /** post on main thread **/
+                    listener.onFailure(ParserErrorCode.PARSING_ERROR, e.message)
+                }
             }
         }
     }
 
     @WorkerThread
-    @Throws(ParserException::class, IOException::class)
+    @Throws(ParserException::class, IOException::class, XmlPullParserException::class)
     private fun parseOnBackgroundThread(xmlString: String): VMAPData? {
         pullParser.setInput(StringReader(xmlString))
         var event = pullParser.eventType

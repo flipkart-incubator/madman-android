@@ -16,7 +16,6 @@
 package com.flipkart.madman.loader.impl
 
 import com.flipkart.madman.component.enums.AdErrorType
-import com.flipkart.madman.component.enums.StringErrorConstants
 import com.flipkart.madman.component.model.vmap.VMAPData
 import com.flipkart.madman.network.model.StringAdRequest
 import com.flipkart.madman.parser.XmlParser
@@ -37,13 +36,6 @@ class StringAdLoader(
         onSuccess: (data: VMAPData) -> Unit,
         onFailure: (errorType: AdErrorType, message: String?) -> Unit
     ) {
-        param.response?.let {
-            parseResponse(it, onSuccess, onFailure)
-        } ?: run {
-            onFailure(
-                AdErrorType.AD_REQUEST_MALFORMED,
-                StringErrorConstants.STRING_REQUEST_MALFORMED
-            )
-        }
+        parseResponse(param, param.response, onSuccess, onFailure)
     }
 }
