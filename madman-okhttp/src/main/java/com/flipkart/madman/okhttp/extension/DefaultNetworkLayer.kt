@@ -103,13 +103,13 @@ open class DefaultNetworkLayer(private val context: Context) : NetworkLayer,
     override fun onResponse(call: Call, response: Response) {
         if (response.isSuccessful) {
             resultListener?.onSuccess(
-                response.code,
-                response.body?.string()
+                response.code(),
+                response.body()?.string()
             )
         } else {
             resultListener?.onError(
-                response.code,
-                response.body?.string() ?: ERROR_MESSAGE
+                response.code(),
+                response.body()?.string() ?: ERROR_MESSAGE
             )
         }
     }
