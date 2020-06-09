@@ -66,15 +66,16 @@ class Madman internal constructor(
     context: Context
 ) {
     private var networkLayer: NetworkLayer
-    private var adLoadListener: AdLoadListener
+    private var adLoadListeners: MutableList<AdLoadListener>
     private var mainThreadHandler: Handler
     private var xmlValidator: XmlValidator
     private var xmlParser: XmlParser
 
     init {
         LogUtil.setLogger(builder.logger ?: DebugLevelLogger())
-        adLoadListener = builder.adLoadListener
-            ?: throw IllegalStateException("adLoadListener cannot be null, implement AdLoadListener interface")
+        adLoadListeners = mutableListOf()
+        builder.adLoadListener?.let { adLoadListeners.add(it) }
+
         networkLayer = builder.networkLayer
             ?: throw IllegalStateException("network layer cannot be null, implement NetworkLayer interface")
         mainThreadHandler = builder.mainThreadHandler ?: Handler(Looper.getMainLooper())
@@ -84,6 +85,27 @@ class Madman internal constructor(
                 AsyncTask.THREAD_POOL_EXECUTOR
             )
         xmlValidator = builder.xmlValidator ?: DefaultXmlValidator()
+    }
+
+    /**
+     * Adds additional [AdLoadListener]
+     * This should be called before [requestAds]
+     *
+     * @param adLoadListener
+     */
+    @MainThread
+    fun addAdLoadListener(adLoadListener: AdLoadListener) {
+        adLoadListeners.add(adLoadListener)
+    }
+
+    /**
+     * Removes already added [AdLoadListener]
+     *
+     * @param adLoadListener
+     */
+    @MainThread
+    fun removeAdLoadListener(adLoadListener: AdLoadListener) {
+        adLoadListeners.remove(adLoadListener)
     }
 
     /**
@@ -126,19 +148,19 @@ class Madman internal constructor(
                 xmlValidator,
                 renderer
             )
-            adLoadListener.onAdManagerLoaded(adsManager)
+            adLoadListeners.forEach { listener ->
+                listener.onAdManagerLoaded(adsManager)
+            }
         }, { adErrorType: AdErrorType, message: String? ->
             /**
              * [VMAPData] is invalid due to the following error
              * fire the onAdManagerLoadFailed event
              */
             LogUtil.log("AdManager creation failed due to $adErrorType")
-            adLoadListener.onAdManagerLoadFailed(
-                AdError(
-                    adErrorType,
-                    message ?: Error.UNIDENTIFIED_ERROR.errorMessage
-                )
-            )
+            val adError = AdError(adErrorType, message ?: Error.UNIDENTIFIED_ERROR.errorMessage)
+            adLoadListeners.forEach { listener ->
+                listener.onAdManagerLoadFailed(adError)
+            }
         })
     }
 
