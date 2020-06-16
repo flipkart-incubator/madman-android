@@ -32,12 +32,13 @@ import com.flipkart.madman.renderer.callback.ViewClickListener
 import com.flipkart.madman.renderer.player.AdPlayer
 import com.flipkart.madman.renderer.settings.DefaultRenderingSettings
 import com.flipkart.madman.renderer.settings.RenderingSettings
+import com.flipkart.mediaads.sdk.R
 import java.util.concurrent.TimeUnit
 
 /**
  * Default implementation of [AdRenderer]
  */
-open class DefaultAdRenderer private constructor(
+open class DefaultAdRenderer constructor(
     builder: Builder,
     private val viewBinder: AdViewBinder
 ) : AdRenderer {
@@ -278,7 +279,14 @@ open class DefaultAdRenderer private constructor(
         }
 
         fun build(viewBinder: AdViewBinder?): DefaultAdRenderer {
-            return DefaultAdRenderer(this, viewBinder ?: AdViewBinder.Builder().build())
+            return DefaultAdRenderer(
+                this,
+                viewBinder ?: AdViewBinder.Builder()
+                    .setSkipViewId(R.id.skip_view)
+                    .setAdCountDownViewId(R.id.ad_count_down)
+                    .setClickThroughViewId(R.id.click_through)
+                    .build(R.layout.ad_layout)
+            )
         }
     }
 
