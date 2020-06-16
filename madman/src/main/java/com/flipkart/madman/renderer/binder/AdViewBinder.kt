@@ -15,17 +15,17 @@
  */
 package com.flipkart.madman.renderer.binder
 
-import com.flipkart.mediaads.sdk.R
-
 /**
  * View Binder class to specify ids for the UI elements.
  *
  * Pass this in the builder of DefaultAdRenderer
  */
-class AdViewBinder private constructor(builder: Builder) {
-
+class AdViewBinder private constructor(
+    builder: Builder,
+    layoutId: Int
+) {
     /** layout id **/
-    val layoutToInflateId: Int
+    val layoutToInflateId: Int = layoutId
 
     /** skip view button id **/
     var skipViewId: Int? = null
@@ -37,22 +37,15 @@ class AdViewBinder private constructor(builder: Builder) {
     var adCountDownViewId: Int? = null
 
     init {
-        layoutToInflateId = builder.layoutToInflateId
         skipViewId = builder.skipViewId
         adCountDownViewId = builder.adCountDownViewId
         clickThroughViewId = builder.clickThroughViewId
     }
 
     class Builder {
-        internal var skipViewId: Int = R.id.skip_view
-        internal var clickThroughViewId: Int = R.id.click_through
-        internal var layoutToInflateId: Int = R.layout.ad_layout
-        internal var adCountDownViewId: Int = R.id.ad_count_down
-
-        fun setLayoutId(id: Int): Builder {
-            this.layoutToInflateId = id
-            return this
-        }
+        internal var skipViewId: Int? = null
+        internal var clickThroughViewId: Int? = null
+        internal var adCountDownViewId: Int? = null
 
         fun setSkipViewId(id: Int): Builder {
             this.skipViewId = id
@@ -64,8 +57,13 @@ class AdViewBinder private constructor(builder: Builder) {
             return this
         }
 
-        fun build(): AdViewBinder {
-            return AdViewBinder(this)
+        fun setAdCountDownViewId(id: Int): Builder {
+            this.adCountDownViewId = id
+            return this
+        }
+
+        fun build(layoutId: Int): AdViewBinder {
+            return AdViewBinder(this, layoutId)
         }
     }
 }
