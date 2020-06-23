@@ -19,6 +19,7 @@ import com.flipkart.madman.component.model.common.Tracking
 import com.flipkart.madman.logger.LogUtil
 import com.flipkart.madman.manager.model.AdElement
 import com.flipkart.madman.network.NetworkLayer
+import com.flipkart.madman.network.NetworkListener
 
 /**
  * Default implementation of [TrackingHandler]
@@ -27,7 +28,15 @@ class DefaultTrackingHandler(private val networkLayer: NetworkLayer) : TrackingH
     override fun trackEvent(urls: List<String>, event: Tracking.TrackingEvent?, forAd: AdElement?) {
         urls.forEach {
             LogUtil.log("Sending tracking, Ad: ${forAd?.getId()}, event: ${event?.name}, url : $it")
-            networkLayer.post(it)
+            networkLayer.post(it, object : NetworkListener<String> {
+                override fun onSuccess(statusCode: Int, result: String?) {
+                    // no-op
+                }
+
+                override fun onError(errorCode: Int, message: String) {
+                    // no-op
+                }
+            })
         }
     }
 }

@@ -20,36 +20,38 @@ import android.os.CancellationSignal
 import com.flipkart.madman.network.NetworkLayer
 import com.flipkart.madman.network.NetworkListener
 import com.flipkart.madman.network.backoff.BackOffPolicy
-import com.flipkart.madman.network.backoff.DefaultBackOffPolicy
-import com.flipkart.madman.network.helper.Util.getLanguage
-import com.flipkart.madman.network.helper.Util.getPackageName
-import com.flipkart.madman.network.helper.Util.getUserAgent
 import com.flipkart.madman.network.model.NetworkAdRequest
+import com.flipkart.madman.okhttp.extension.helper.HeaderUtils
+import com.flipkart.madman.okhttp.extension.helper.MainThreadExecutor
 import okhttp3.*
 import java.io.IOException
+import java.util.concurrent.Executor
+import java.util.concurrent.TimeUnit
 
 /**
  * Default implementation of the [NetworkLayer]
  *
  * It uses the [OkHttpClient] to make network calls. You can override the behaviour if required.
  */
-open class DefaultNetworkLayer(private val context: Context) : NetworkLayer,
-    Callback {
+open class DefaultNetworkLayer(private val context: Context, builder: Builder) : NetworkLayer {
+    private val mainThreadExecutor: Executor = builder.mainThreadExecutor ?: MainThreadExecutor()
+    private val callTimeoutInMs: Long = builder.vastTimeoutInMs ?: DEFAULT_TIMEOUT_IN_MS
+
     /** ok-http client for making request **/
-    protected open val okHttpClient: OkHttpClient by lazy {
+    private val okHttpClient: OkHttpClient by lazy {
         createOkHttpClient()
     }
 
-    /** back off policy **/
-    protected open val backOffPolicy: BackOffPolicy by lazy {
-        createBackOffPolicy()
+    private val userAgent: String by lazy {
+        HeaderUtils.getUserAgent(context)
     }
 
-    /** callback listener, passed in fetch **/
-    private var resultListener: NetworkListener<String>? = null
+    private val locale: String by lazy {
+        HeaderUtils.getLanguage()
+    }
 
-    private val userAgent: String by lazy {
-        getUserAgent(context)
+    private val packageName: String by lazy {
+        HeaderUtils.getPackageName(context)
     }
 
     override fun fetch(
@@ -57,61 +59,66 @@ open class DefaultNetworkLayer(private val context: Context) : NetworkLayer,
         resultListener: NetworkListener<String>,
         cancellationSignal: CancellationSignal
     ) {
-        request.url?.let {
-            this.resultListener = resultListener
+        val requestBuilder = Request.Builder().url(request.url)
+        modifyRequest(requestBuilder)
 
-            val requestBuilder = Request.Builder().url(it)
-            modifyRequest(requestBuilder)
-
-            val currentCall = okHttpClient.newCall(requestBuilder.build())
-            enqueueCall(currentCall)
-
-            cancellationSignal.setOnCancelListener {
-                /** cancel the call **/
-                currentCall.cancel()
+        val newCall = okHttpClient.newCall(requestBuilder.build())
+        newCall.enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                mainThreadExecutor.execute {
+                    resultListener.onError(
+                        0,
+                        e.message ?: DEFAULT_ERROR_MESSAGE
+                    )
+                }
             }
-        } ?: run {
-            resultListener.onError(
-                0,
-                "url is empty"
-            )
+
+            override fun onResponse(call: Call, response: Response) {
+                mainThreadExecutor.execute {
+                    if (response.isSuccessful) {
+                        resultListener.onSuccess(
+                            response.code(),
+                            response.body()?.string()
+                        )
+                    } else {
+                        resultListener.onError(
+                            response.code(),
+                            response.body()?.string() ?: DEFAULT_ERROR_MESSAGE
+                        )
+                    }
+                }
+            }
+        })
+
+        cancellationSignal.setOnCancelListener {
+            /** cancel the call **/
+            newCall.cancel()
         }
     }
 
-    override fun post(url: String) {
+    override fun post(url: String, resultListener: NetworkListener<String>) {
         val requestBuilder = Request.Builder().url(url)
         modifyRequest(requestBuilder)
 
         okHttpClient.newCall(requestBuilder.build()).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                // no-op
+                mainThreadExecutor.execute {
+                    resultListener.onError(
+                        0,
+                        e.message ?: DEFAULT_ERROR_MESSAGE
+                    )
+                }
             }
 
             override fun onResponse(call: Call, response: Response) {
-                // no-op
+                mainThreadExecutor.execute {
+                    resultListener.onSuccess(
+                        response.code(),
+                        response.body()?.string()
+                    )
+                }
             }
         })
-    }
-
-    override fun onFailure(call: Call, e: IOException) {
-        resultListener?.onError(
-            0,
-            ERROR_MESSAGE
-        )
-    }
-
-    override fun onResponse(call: Call, response: Response) {
-        if (response.isSuccessful) {
-            resultListener?.onSuccess(
-                response.code(),
-                response.body()?.string()
-            )
-        } else {
-            resultListener?.onError(
-                response.code(),
-                response.body()?.string() ?: ERROR_MESSAGE
-            )
-        }
     }
 
     /**
@@ -119,37 +126,65 @@ open class DefaultNetworkLayer(private val context: Context) : NetworkLayer,
      */
     protected open fun createOkHttpClient(): OkHttpClient {
         val builder = OkHttpClient.Builder()
-        builder.retryOnConnectionFailure(true)
-        return OkHttpClient()
+            .retryOnConnectionFailure(true)
+            .connectTimeout(callTimeoutInMs, TimeUnit.MILLISECONDS)
+            .readTimeout(callTimeoutInMs * 4, TimeUnit.MILLISECONDS)
+            .writeTimeout(callTimeoutInMs * 4, TimeUnit.MILLISECONDS)
+        return builder.build()
     }
 
     /**
-     * creates a [BackOffPolicy]
-     */
-    protected open fun createBackOffPolicy(): BackOffPolicy {
-        return DefaultBackOffPolicy()
-    }
-
-    /**
-     * override this method to modify the request
-     * for eg adding headers etc
+     * to modify the request builder
+     * @param request
      */
     protected open fun modifyRequest(request: Request.Builder) {
-        request.addHeader(ACCEPT_LANGUAGE_HEADER, getLanguage())
-        request.addHeader(X_REQUESTED_WITH_HEADER, getPackageName(context))
-        request.addHeader(
-            ACCEPT_HEADER,
-            ACCEPT_HEADER_VALUE
-        )
+        request.addHeader(ACCEPT_LANGUAGE_HEADER, locale)
+        request.addHeader(X_REQUESTED_WITH_HEADER, packageName)
         request.addHeader(USER_AGENT_HEADER, userAgent)
+        request.addHeader(ACCEPT_HEADER, ACCEPT_HEADER_VALUE)
     }
 
-    private fun enqueueCall(call: Call?) {
-        call?.enqueue(this)
+    /**
+     * Builder class to build an instance of [DefaultNetworkLayer]
+     */
+    class Builder {
+        internal var backOffPolicy: BackOffPolicy? = null
+        internal var mainThreadExecutor: Executor? = null
+        internal var vastTimeoutInMs: Long? = null
+
+        /**
+         * set a custom [BackOffPolicy]
+         * if unset, [DefaultBackOffPolicy] will be used
+         */
+        fun setBackOffPolicy(backOffPolicy: BackOffPolicy): Builder {
+            this.backOffPolicy = backOffPolicy
+            return this
+        }
+
+        /**
+         * set a main thread executor
+         */
+        fun setMainThreadExecutor(executor: Executor): Builder {
+            this.mainThreadExecutor = executor
+            return this
+        }
+
+        /**
+         * set vast time out in milli sec
+         */
+        fun setVastTimeout(timeoutInMs: Long): Builder {
+            this.vastTimeoutInMs = timeoutInMs
+            return this
+        }
+
+        fun build(context: Context): DefaultNetworkLayer {
+            return DefaultNetworkLayer(context, this)
+        }
     }
 
     companion object {
-        const val ERROR_MESSAGE = "Something went wrong"
+        const val DEFAULT_ERROR_MESSAGE = "Something went wrong"
+        const val DEFAULT_TIMEOUT_IN_MS = 5000L // 5 seconds timeout
         const val ACCEPT_LANGUAGE_HEADER = "Accept-Language"
         const val X_REQUESTED_WITH_HEADER = "X-Requested-With"
         const val ACCEPT_HEADER = "Accept"

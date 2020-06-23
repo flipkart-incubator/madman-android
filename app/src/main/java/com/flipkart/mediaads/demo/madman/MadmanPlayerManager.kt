@@ -34,7 +34,6 @@ import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
-import com.google.android.exoplayer2.util.EventLogger
 import com.google.android.exoplayer2.util.Util
 
 class MadmanPlayerManager(
@@ -120,7 +119,7 @@ class MadmanPlayerManager(
         val builder =
             MadmanAdLoader.Builder(
                 context,
-                DefaultNetworkLayer(context)
+                DefaultNetworkLayer.Builder().build(context)
             )
         adsLoader = if (!TextUtils.isEmpty(url)) {
             builder.buildForAdUri(Uri.parse(url))

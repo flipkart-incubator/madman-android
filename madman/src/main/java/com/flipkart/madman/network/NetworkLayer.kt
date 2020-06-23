@@ -35,5 +35,5 @@ interface NetworkLayer {
     /**
      * make the post call for the given url
      */
-    fun post(url: String)
+    fun post(url: String, resultListener: NetworkListener<String>)
 }
