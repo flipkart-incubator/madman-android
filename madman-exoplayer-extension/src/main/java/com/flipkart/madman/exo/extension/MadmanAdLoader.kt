@@ -185,7 +185,7 @@ class MadmanAdLoader private constructor(
      */
         (private val context: Context, private val networkLayer: NetworkLayer) {
 
-        private var adRenderer: DefaultAdRenderer? = null
+        private var adRenderer: AdRenderer? = null
         private var adLoadListener: AdLoadListener? = null
         private var adEventListener: AdEventListener? = null
         private var adErrorListener: AdErrorListener? = null
