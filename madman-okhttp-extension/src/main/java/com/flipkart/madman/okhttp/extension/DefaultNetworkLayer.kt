@@ -74,18 +74,19 @@ open class DefaultNetworkLayer(private val context: Context, builder: Builder) :
             }
 
             override fun onResponse(call: Call, response: Response) {
+                val responseBody = response.body()?.string()
                 if (response.isSuccessful) {
                     mainThreadExecutor.execute {
                         resultListener.onSuccess(
                             response.code(),
-                            response.body()?.string()
+                            responseBody
                         )
                     }
                 } else {
                     mainThreadExecutor.execute {
                         resultListener.onError(
                             response.code(),
-                            response.body()?.string() ?: DEFAULT_ERROR_MESSAGE
+                            responseBody ?: DEFAULT_ERROR_MESSAGE
                         )
                     }
                 }
@@ -113,10 +114,11 @@ open class DefaultNetworkLayer(private val context: Context, builder: Builder) :
             }
 
             override fun onResponse(call: Call, response: Response) {
+                val responseBody = response.body()?.string()
                 mainThreadExecutor.execute {
                     resultListener.onSuccess(
                         response.code(),
-                        response.body()?.string()
+                        responseBody
                     )
                 }
             }
