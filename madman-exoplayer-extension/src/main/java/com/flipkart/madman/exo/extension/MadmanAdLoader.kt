@@ -533,8 +533,7 @@ class MadmanAdLoader private constructor(
 // until MAXIMUM_PRELOAD_DURATION_MS before the ad so that an ad group load error delivered
 // just after an ad group isn't incorrectly attributed to the next ad group.
             val nextAdGroupIndex = adPlaybackState.getAdGroupIndexAfterPositionUs(
-                C.msToUs(contentPositionMs),
-                C.msToUs(contentDurationMs)
+                C.msToUs(contentPositionMs)
             )
             if (nextAdGroupIndex != expectedAdGroupIndex && nextAdGroupIndex != C.INDEX_UNSET) {
                 var nextAdGroupTimeMs = C.usToMs(
