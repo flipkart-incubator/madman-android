@@ -13,26 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.flipkart.madman.network.helper
+package com.flipkart.madman.okhttp.extension.helper
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
+import android.os.Handler
+import android.os.Looper
+import java.util.concurrent.Executor
 
-@RunWith(RobolectricTestRunner::class)
-@Config(sdk = [21])
-class UtilTest {
-    @Test
-    fun testLocale() {
-        val language = Util.getLanguage()
-        assert(language == "en")
-    }
-
-    @Test
-    fun testUserAgent() {
-        val userAgent = Util.getUserAgent(RuntimeEnvironment.application)
-        assert(userAgent.isNotEmpty())
+/**
+ *[Executor] which runs on main thread
+ */
+class MainThreadExecutor : Executor {
+    private val handler = Handler(Looper.getMainLooper())
+    override fun execute(r: Runnable) {
+        handler.post(r)
     }
 }

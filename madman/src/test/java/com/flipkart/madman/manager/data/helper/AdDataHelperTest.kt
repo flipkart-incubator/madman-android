@@ -67,4 +67,14 @@ class AdDataHelperTest {
         /** has pre rolls **/
         assert(hasPreRollAds)
     }
+
+    /**
+     * test if vmap has only post roll ads
+     */
+    @Test
+    fun testIfVMAPHasOnlyPostRollAds() {
+        val vmapData = VMAPUtil.createVMAPWithOnlyPostRoll()
+        val hasOnlyPostRollAds = AdDataHelper.hasOnlyPostRollAds(vmapData)
+        assert(hasOnlyPostRollAds)
+    }
 }

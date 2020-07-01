@@ -33,6 +33,7 @@ package com.flipkart.madman.exo.extension
 
 import android.content.Context
 import android.net.Uri
+import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.ViewGroup
@@ -43,6 +44,7 @@ import com.flipkart.madman.component.enums.AdEventType
 import com.flipkart.madman.listener.AdErrorListener
 import com.flipkart.madman.listener.AdEventListener
 import com.flipkart.madman.listener.AdLoadListener
+import com.flipkart.madman.logger.Logger
 import com.flipkart.madman.manager.AdManager
 import com.flipkart.madman.network.NetworkLayer
 import com.flipkart.madman.network.model.NetworkAdRequest
@@ -50,6 +52,7 @@ import com.flipkart.madman.network.model.StringAdRequest
 import com.flipkart.madman.provider.ContentProgressProvider
 import com.flipkart.madman.provider.Progress
 import com.flipkart.madman.renderer.DefaultAdRenderer
+import com.flipkart.madman.renderer.binder.AdViewBinder
 import com.flipkart.madman.renderer.player.AdPlayer
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.ExoPlaybackException
@@ -78,8 +81,12 @@ class MadmanAdLoader private constructor(
     networkLayer: NetworkLayer,
     private val adTagUri: Uri?,
     private val adsResponse: String?,
+    private val adViewBinder: AdViewBinder?,
+    private val adLoadListener: AdLoadListener?,
     private val adEventListener: AdEventListener?,
-    private val adErrorListener: AdErrorListener?
+    private val adErrorListener: AdErrorListener?,
+    logger: Logger?,
+    mainThreadHandler: Handler?
 ) : Player.EventListener, AdsLoader, AdPlayer, ContentProgressProvider, AdErrorListener,
     AdLoadListener, AdEventListener {
     private var debug = true
@@ -108,14 +115,17 @@ class MadmanAdLoader private constructor(
      * The expected ad group index that Madman should load next.
      */
     private var expectedAdGroupIndex: Int = 0
+
     /**
      * The index of the current ad group that Madman is loading.
      */
     private var adGroupIndex: Int = 0
+
     /**
      * Whether Madman has sent an ad event to pause content since the last resume content event.
      */
     private var pausedContent: Boolean = false
+
     /**
      * The current ad playback state.
      */
@@ -128,31 +138,37 @@ class MadmanAdLoader private constructor(
      * Whether the player is playing an ad.
      */
     private var playingAd: Boolean = false
+
     /**
      * If the player is playing an ad, stores the ad index in its ad group. [C.INDEX_UNSET]
      * otherwise.
      */
     private var playingAdIndexInAdGroup: Int = 0
+
     /**
      * Whether there's a pending ad preparation error which Madman needs to be notified of when it
      * transitions from playing content to playing the ad.
      */
     private var shouldNotifyAdPrepareError: Boolean = false
+
     /**
      * If a content period has finished but Madman has not yet called [.playAd], stores the value
      * of [SystemClock.elapsedRealtime] when the content stopped playing. This can be used to
      * determine a fake, increasing content position. [C.TIME_UNSET] otherwise.
      */
     private var fakeContentProgressElapsedRealtimeMs: Long = 0
+
     /**
      * If [.fakeContentProgressElapsedRealtimeMs] is set, stores the offset from which the
      * content progress should increase. [C.TIME_UNSET] otherwise.
      */
     private var fakeContentProgressOffsetMs: Long = 0
+
     /**
      * Stores the pending content position when a seek operation was intercepted to play an ad.
      */
     private var pendingContentPositionMs: Long = 0
+
     /**
      * Whether [.getContentProgress] ()} has sent [.pendingContentPositionMs] to Madman.
      */
@@ -169,8 +185,17 @@ class MadmanAdLoader private constructor(
      */
         (private val context: Context, private val networkLayer: NetworkLayer) {
 
+        private var adViewBinder: AdViewBinder? = null
+        private var adLoadListener: AdLoadListener? = null
         private var adEventListener: AdEventListener? = null
         private var adErrorListener: AdErrorListener? = null
+        private var logger: Logger? = null
+        private var mainThreadHandler: Handler? = null
+
+        fun setAdLoadListener(listener: AdLoadListener): Builder {
+            this.adLoadListener = listener
+            return this
+        }
 
         fun setAdEventListener(listener: AdEventListener): Builder {
             this.adEventListener = listener
@@ -179,6 +204,21 @@ class MadmanAdLoader private constructor(
 
         fun setAdErrorListener(listener: AdErrorListener): Builder {
             this.adErrorListener = listener
+            return this
+        }
+
+        fun setLogger(logger: Logger): Builder {
+            this.logger = logger
+            return this
+        }
+
+        fun setMainThreadHandler(handler: Handler): Builder {
+            this.mainThreadHandler = handler
+            return this
+        }
+
+        fun setAdViewBinder(adViewBinder: AdViewBinder): Builder {
+            this.adViewBinder = adViewBinder
             return this
         }
 
@@ -196,8 +236,12 @@ class MadmanAdLoader private constructor(
                 networkLayer,
                 adTagUri,
                 null,
+                adViewBinder,
+                adLoadListener,
                 adEventListener,
-                adErrorListener
+                adErrorListener,
+                logger,
+                mainThreadHandler
             )
         }
 
@@ -214,8 +258,12 @@ class MadmanAdLoader private constructor(
                 networkLayer,
                 null,
                 adsResponse,
+                adViewBinder,
+                adLoadListener,
                 adEventListener,
-                adErrorListener
+                adErrorListener,
+                logger,
+                mainThreadHandler
             )
         }
     }
@@ -233,16 +281,35 @@ class MadmanAdLoader private constructor(
         period = Timeline.Period()
         adCallbacks = ArrayList(/* initialCapacity= */1)
 
-        madman = Madman.Builder()
+        val madmanBuilder = Madman.Builder()
             .setAdLoadListener(this)
             .setNetworkLayer(networkLayer)
-            .build(context)
+
+        if (logger != null) {
+            madmanBuilder.setLogger(logger)
+        }
+        if (mainThreadHandler != null) {
+            madmanBuilder.setMainThreadHandler(mainThreadHandler)
+        }
+
+        madman = madmanBuilder.build(context)
+        if (adLoadListener != null) {
+            madman.addAdLoadListener(adLoadListener)
+        }
 
         fakeContentProgressElapsedRealtimeMs = C.TIME_UNSET
         fakeContentProgressOffsetMs = C.TIME_UNSET
         pendingContentPositionMs = C.TIME_UNSET
         adGroupIndex = C.INDEX_UNSET
         contentDurationMs = C.TIME_UNSET
+    }
+
+    /**
+     * Returns the madman instance
+     * @return [Madman]
+     */
+    public fun getMadman(): Madman {
+        return madman
     }
 
     /**
@@ -262,8 +329,8 @@ class MadmanAdLoader private constructor(
         }
         pendingAdRequestContext = Any()
 
-        val adRenderer =
-            DefaultAdRenderer.Builder().setPlayer(this).setContainer(adViewGroup).build(null)
+        val adRenderer = DefaultAdRenderer.Builder().setPlayer(this).setContainer(adViewGroup)
+            .build(adViewBinder)
 
         if (adTagUri != null) {
             val request = NetworkAdRequest(adTagUri.toString())
@@ -348,6 +415,16 @@ class MadmanAdLoader private constructor(
 
     override fun release() {
         pendingAdRequestContext = null
+        if (adEventListener != null) {
+            this.adsManager?.removeAdEventListener(adEventListener)
+        }
+        if (adErrorListener != null) {
+            this.adsManager?.removeAdErrorListener(adErrorListener)
+        }
+        if (adLoadListener != null) {
+            madman.removeAdLoadListener(adLoadListener)
+        }
+        madman.removeAdLoadListener(this)
         adsManager?.destroy()
         adsManager = null
         pausedContent = false
@@ -416,7 +493,6 @@ class MadmanAdLoader private constructor(
     }
 
     override fun onAdError(error: AdErrorListener.AdError) {
-        //        AdError error = adErrorEvent.getError();
         if (debug) {
             Log.d(TAG, "onAdError" + error.getMessage())
         }
@@ -465,8 +541,7 @@ class MadmanAdLoader private constructor(
 // until MAXIMUM_PRELOAD_DURATION_MS before the ad so that an ad group load error delivered
 // just after an ad group isn't incorrectly attributed to the next ad group.
             val nextAdGroupIndex = adPlaybackState.getAdGroupIndexAfterPositionUs(
-                C.msToUs(contentPositionMs),
-                C.msToUs(contentDurationMs)
+                C.msToUs(contentPositionMs)
             )
             if (nextAdGroupIndex != expectedAdGroupIndex && nextAdGroupIndex != C.INDEX_UNSET) {
                 var nextAdGroupTimeMs = C.usToMs(
@@ -1039,10 +1114,12 @@ class MadmanAdLoader private constructor(
          * The ad playback state when Madman is not playing an ad.
          */
         private const val AD_STATE_NONE = 0
+
         /**
          * The ad playback state when Madman has called [.playAd] and not [.pauseAd].
          */
         private const val AD_STATE_PLAYING = 1
+
         /**
          * The ad playback state when Madman has called [.pauseAd] while playing an ad.
          */

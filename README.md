@@ -69,7 +69,7 @@ dependencies {
    implementation 'com.github.flipkart-incubator.madman-android:madman:$latest_version'
    
    // optional network layer module for fetching vmap/vast from server, sending tracking events etc
-   implementation 'com.github.flipkart-incubator.madman-android:madman-okhttp:$latest_version' 
+   implementation 'com.github.flipkart-incubator.madman-android:madman-okhttp-extension:$latest_version'
 }
 ```
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.flipkart.madman.network.helper
+package com.flipkart.madman.okhttp.extension.helper
 
 import android.content.Context
 import android.os.Build
@@ -21,10 +21,10 @@ import android.os.LocaleList
 import android.webkit.WebSettings
 import java.util.*
 
-object Util {
+object HeaderUtils {
 
     /**
-     * get the [Locale]
+     * returns the [Locale]
      */
     fun getLanguage(): String {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -35,12 +35,17 @@ object Util {
     }
 
     /**
-     * package name of the running application
+     * returns package name of the running application
+     * @param context
      */
     fun getPackageName(context: Context): String {
         return context.applicationContext.packageName
     }
 
+    /**
+     * returns the user agent
+     * @param context
+     */
     fun getUserAgent(context: Context): String {
         return try {
             WebSettings.getDefaultUserAgent(context);
@@ -50,7 +55,8 @@ object Util {
     }
 
     /**
-     * get user agent
+     * builds a custom user agent in cases where the
+     * [WebSettings].getDefaultUserAgent(context) throws an exception
      */
     private fun getDefaultUserAgent(): String {
         val result = StringBuilder(128)

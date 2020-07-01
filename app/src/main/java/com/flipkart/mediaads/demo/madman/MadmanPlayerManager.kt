@@ -25,8 +25,8 @@ import com.flipkart.mediaads.demo.helper.Utils.readFromAssets
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.ExoPlayerFactory
 import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.source.ExtractorMediaSource
 import com.google.android.exoplayer2.source.MediaSource
-import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.source.ads.AdsMediaSource
 import com.google.android.exoplayer2.source.dash.DashMediaSource
 import com.google.android.exoplayer2.source.hls.HlsMediaSource
@@ -34,7 +34,6 @@ import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
-import com.google.android.exoplayer2.util.EventLogger
 import com.google.android.exoplayer2.util.Util
 
 class MadmanPlayerManager(
@@ -109,7 +108,7 @@ class MadmanPlayerManager(
             C.TYPE_HLS -> HlsMediaSource.Factory(
                 dataSourceFactory
             ).createMediaSource(uri)
-            C.TYPE_OTHER -> ProgressiveMediaSource.Factory(
+            C.TYPE_OTHER -> ExtractorMediaSource.Factory(
                 dataSourceFactory
             ).createMediaSource(uri)
             else -> throw IllegalStateException("Unsupported type: $type")
@@ -120,7 +119,7 @@ class MadmanPlayerManager(
         val builder =
             MadmanAdLoader.Builder(
                 context,
-                DefaultNetworkLayer(context)
+                DefaultNetworkLayer.Builder().build(context)
             )
         adsLoader = if (!TextUtils.isEmpty(url)) {
             builder.buildForAdUri(Uri.parse(url))

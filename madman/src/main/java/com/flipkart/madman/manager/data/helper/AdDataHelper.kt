@@ -75,6 +75,14 @@ object AdDataHelper {
     }
 
     /**
+     * check if there are only post-roll ad present
+     */
+    fun hasOnlyPostRollAds(data: VMAPData): Boolean {
+        return data.adBreaks?.filter { it.timeOffset != AdBreak.TimeOffsetTypes.END }
+            .isNullOrEmpty()
+    }
+
+    /**
      * creates a [AdElement] for the given [VASTData]
      */
     fun createAdFor(
