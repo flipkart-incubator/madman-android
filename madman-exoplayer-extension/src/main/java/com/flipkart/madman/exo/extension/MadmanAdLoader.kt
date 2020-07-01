@@ -305,6 +305,14 @@ class MadmanAdLoader private constructor(
     }
 
     /**
+     * Returns the madman instance
+     * @return [Madman]
+     */
+    public fun getMadman(): Madman {
+        return madman
+    }
+
+    /**
      * Requests ads, if they have not already been requested. Must be called on the main thread.
      *
      *
