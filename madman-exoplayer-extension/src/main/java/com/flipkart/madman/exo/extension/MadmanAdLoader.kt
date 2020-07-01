@@ -51,6 +51,7 @@ import com.flipkart.madman.network.model.NetworkAdRequest
 import com.flipkart.madman.network.model.StringAdRequest
 import com.flipkart.madman.provider.ContentProgressProvider
 import com.flipkart.madman.provider.Progress
+import com.flipkart.madman.renderer.AdRenderer
 import com.flipkart.madman.renderer.DefaultAdRenderer
 import com.flipkart.madman.renderer.player.AdPlayer
 import com.google.android.exoplayer2.C
@@ -80,6 +81,7 @@ class MadmanAdLoader private constructor(
     networkLayer: NetworkLayer,
     private val adTagUri: Uri?,
     private val adsResponse: String?,
+    private val adRenderer: AdRenderer?,
     private val adLoadListener: AdLoadListener?,
     private val adEventListener: AdEventListener?,
     private val adErrorListener: AdErrorListener?,
@@ -183,6 +185,7 @@ class MadmanAdLoader private constructor(
      */
         (private val context: Context, private val networkLayer: NetworkLayer) {
 
+        private var adRenderer: DefaultAdRenderer? = null
         private var adLoadListener: AdLoadListener? = null
         private var adEventListener: AdEventListener? = null
         private var adErrorListener: AdErrorListener? = null
@@ -214,6 +217,11 @@ class MadmanAdLoader private constructor(
             return this
         }
 
+        fun setAdRenderer(renderer: AdRenderer): Builder {
+            this.adRenderer = renderer
+            return this
+        }
+
         /**
          * Returns a new [MadmanAdLoader] for the specified ad tag.
          *
@@ -228,6 +236,7 @@ class MadmanAdLoader private constructor(
                 networkLayer,
                 adTagUri,
                 null,
+                adRenderer,
                 adLoadListener,
                 adEventListener,
                 adErrorListener,
@@ -249,6 +258,7 @@ class MadmanAdLoader private constructor(
                 networkLayer,
                 null,
                 adsResponse,
+                adRenderer,
                 adLoadListener,
                 adEventListener,
                 adErrorListener,
@@ -312,7 +322,8 @@ class MadmanAdLoader private constructor(
         pendingAdRequestContext = Any()
 
         val adRenderer =
-            DefaultAdRenderer.Builder().setPlayer(this).setContainer(adViewGroup).build(null)
+            adRenderer ?: DefaultAdRenderer.Builder().setPlayer(this).setContainer(adViewGroup)
+                .build(null)
 
         if (adTagUri != null) {
             val request = NetworkAdRequest(adTagUri.toString())
