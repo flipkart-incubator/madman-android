@@ -99,9 +99,10 @@ class DefaultNetworkLayerTest {
             // mimic the network call failure case
             callback.onResponse(
                 mockOkHttpCall,
-                Response.Builder().request(Request.Builder().url("https://www.google.com").build()).protocol(
-                    Protocol.HTTP_1_1
-                ).message("internal server").code(500).build()
+                Response.Builder().request(Request.Builder().url("https://www.google.com").build())
+                    .protocol(
+                        Protocol.HTTP_1_1
+                    ).message("internal server").code(500).build()
             )
         }
         doAnswer(answer).`when`(mockOkHttpCall).enqueue(anyObject())
@@ -134,9 +135,10 @@ class DefaultNetworkLayerTest {
             // mimic the network call success case
             callback.onResponse(
                 mockOkHttpCall,
-                Response.Builder().request(Request.Builder().url("https://www.google.com").build()).protocol(
-                    Protocol.HTTP_1_1
-                ).message("valid").code(202).build()
+                Response.Builder().request(Request.Builder().url("https://www.google.com").build())
+                    .protocol(
+                        Protocol.HTTP_1_1
+                    ).message("valid").code(202).build()
             )
         }
         doAnswer(answer).`when`(mockOkHttpCall).enqueue(anyObject())
@@ -153,7 +155,10 @@ class DefaultNetworkLayerTest {
     }
 
     inner class TestNetworkLayer :
-        com.flipkart.madman.okhttp.extension.DefaultNetworkLayer(RuntimeEnvironment.application) {
+        com.flipkart.madman.okhttp.extension.DefaultNetworkLayer(
+            RuntimeEnvironment.application,
+            Builder()
+        ) {
         override fun createOkHttpClient(): OkHttpClient {
             return mockOkHttpClient
         }
