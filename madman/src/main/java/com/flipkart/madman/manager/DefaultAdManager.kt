@@ -398,10 +398,15 @@ open class DefaultAdManager(
 
     /**
      * check if the given ad break be preloaded
+     * 1. The [AdBreak] is in the preload range defined by the [AdRenderer]
+     * 2. If the content has completed, and the [AdBreak] to be played is a post roll
+     * 3. If there is only one post roll [AdBreak]
      */
     private fun canLoadAdBreak(adBreak: AdBreak, currentTime: Float): Boolean {
-        return (adBreak.timeOffsetInSec - currentTime <= adRenderer.getRenderingSettings()
-            .getPreloadTime() || (adPlaybackState.hasContentCompleted() && adBreak.timeOffset == AdBreak.TimeOffsetTypes.END))
+        val preloadTime = adRenderer.getRenderingSettings().getPreloadTime()
+        return adBreak.timeOffsetInSec - currentTime <= preloadTime
+                || (adPlaybackState.hasContentCompleted() && adBreak.timeOffset == AdBreak.TimeOffsetTypes.END)
+                || AdDataHelper.hasOnlyPostRollAds(data)
     }
 
     /**

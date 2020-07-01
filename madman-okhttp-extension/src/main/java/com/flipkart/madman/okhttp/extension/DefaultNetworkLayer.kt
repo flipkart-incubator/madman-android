@@ -74,13 +74,15 @@ open class DefaultNetworkLayer(private val context: Context, builder: Builder) :
             }
 
             override fun onResponse(call: Call, response: Response) {
-                mainThreadExecutor.execute {
-                    if (response.isSuccessful) {
+                if (response.isSuccessful) {
+                    mainThreadExecutor.execute {
                         resultListener.onSuccess(
                             response.code(),
                             response.body()?.string()
                         )
-                    } else {
+                    }
+                } else {
+                    mainThreadExecutor.execute {
                         resultListener.onError(
                             response.code(),
                             response.body()?.string() ?: DEFAULT_ERROR_MESSAGE

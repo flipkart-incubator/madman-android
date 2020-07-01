@@ -1,2 +1,2 @@
-include ':app', ':madman', ':madman-okhttp', ':madman-exoplayer-extension'
+include ':app', ':madman', ':madman-okhttp-extension', ':madman-exoplayer-extension'
 rootProject.name = 'media-ads-sdk'

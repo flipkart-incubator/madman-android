@@ -160,6 +160,49 @@ class DefaultAdManagerTest {
     }
 
     /**
+     * Test to verify the behaviour when there is only post-roll add
+     */
+    @Test
+    fun testBehaviourWhenThereIsOnlyPostRollAdToPlay() {
+        val answer = Answer { invocation ->
+            val listener = invocation.getArgument<VastAdProvider.Listener>(1)
+            // mimics return empty vast data
+            listener.onVastFetchSuccess(VMAPUtil.createVAST())
+        }
+        doAnswer(answer).`when`(mockNetworkVastAdProvider).getVASTAd(anyObject(), anyObject())
+
+        val vmap = VMAPUtil.createVMAPWithOnlyPostRoll()
+        adManager = DefaultAdManager(
+            vmap,
+            mockNetworkLayer,
+            mockXmlParser,
+            mockXmlValidator,
+            mockAdRenderer
+        )
+        adManager?.addAdErrorListener(mockAdErrorListener)
+        adManager?.addAdEventListener(mockAdEventListener)
+
+        /** initialise the ad manager **/
+        adManager?.init(
+            mockContentProgressProvider,
+            DefaultAdBreakFinder(),
+            VastAdProviderImpl(mockStringVastAdProvider, mockNetworkVastAdProvider)
+        )
+
+        /** verify there is ad break to be played and other properties **/
+        assert(adManager?.adPlaybackState?.getAdGroup()?.getAdBreak() != null)
+        assert(
+            adManager?.adPlaybackState?.getAdGroup()
+                ?.getAdBreak()?.timeOffset == AdBreak.TimeOffsetTypes.END
+        )
+
+        /** ad event listener is called with CONTENT_RESUME_REQUESTED & LOADED as there is a post-roll ad **/
+        verify(mockAdEventListener, times(2)).onAdEvent(capture(adEventCaptor))
+        assert(adEventCaptor.allValues[0].getType() == AdEventType.CONTENT_RESUME_REQUESTED)
+        assert(adEventCaptor.allValues[1].getType() == AdEventType.LOADED)
+    }
+
+    /**
      * Test to verify the behaviour when there is a no pre-roll add
      */
     @Test

@@ -19,7 +19,6 @@ package com.flipkart.madman.component.enums
  * List of all ad events sent to the client.
  */
 enum class AdEventType {
-    CUEPOINTS_CHANGED,
     STARTED,
     PAUSED,
     RESUMED,

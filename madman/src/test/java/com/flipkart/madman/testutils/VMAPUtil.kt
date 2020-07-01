@@ -81,6 +81,24 @@ object VMAPUtil {
         return result
     }
 
+    fun createVMAPWithOnlyPostRoll(): VMAPData {
+        var result = VMAPData()
+        XmlParser.Builder().build(Handler(), CurrentThreadExecutor())
+            .parse(
+                XmlUtil.readString("vmap_with_only_post_roll.xml"),
+                object : XmlParser.ParserListener<VMAPData> {
+                    override fun onSuccess(t: VMAPData?) {
+                        result = t ?: result
+                        lock.countDown()
+                    }
+
+                    override fun onFailure(type: Int, message: String?) {
+                    }
+                })
+        lock.await(2000, TimeUnit.MILLISECONDS)
+        return result
+    }
+
     fun createVMAP(preRoll: Boolean): VMAPData {
         var result = VMAPData()
         XmlParser.Builder().build(Handler(), CurrentThreadExecutor())
