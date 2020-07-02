@@ -127,7 +127,7 @@ open class DefaultAdManager(
                  * send the play ad event as soon as current time is same as the cue point
                  */
                 AdBreak.AdBreakState.LOADED -> {
-                    if (canPlayAdBreak(it, currentTime, duration)) {
+                    if (canPlayAdBreak(it, currentTime)) {
                         pauseContent()
                         playAd()
                     }
@@ -412,8 +412,8 @@ open class DefaultAdManager(
     /**
      * check if ad break be played
      */
-    private fun canPlayAdBreak(adBreak: AdBreak, currentTime: Float, duration: Float): Boolean {
-        return currentTime >= adBreak.timeOffsetInSec || currentTime >= duration
+    private fun canPlayAdBreak(adBreak: AdBreak, currentTime: Float): Boolean {
+        return currentTime >= adBreak.timeOffsetInSec || (adPlaybackState.hasContentCompleted() && adBreak.timeOffset == AdBreak.TimeOffsetTypes.END)
     }
 
     /**
