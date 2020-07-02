@@ -413,7 +413,7 @@ open class DefaultAdManager(
      * check if ad break be played
      */
     private fun canPlayAdBreak(adBreak: AdBreak, currentTime: Float): Boolean {
-        return currentTime >= adBreak.timeOffsetInSec
+        return currentTime >= adBreak.timeOffsetInSec || (adPlaybackState.hasContentCompleted() && adBreak.timeOffset == AdBreak.TimeOffsetTypes.END)
     }
 
     /**
