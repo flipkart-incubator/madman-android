@@ -42,7 +42,7 @@ abstract class AdPlayerCallback : AdPlayer.AdPlayerCallback {
     }
 
     override fun onEnded() {
-        onAdEndedCallback(false)
+        onAdEndedCallback()
     }
 
     override fun onError() {
@@ -61,7 +61,7 @@ abstract class AdPlayerCallback : AdPlayer.AdPlayerCallback {
     /**
      * on ad ended callback from the player
      */
-    protected abstract fun onAdEndedCallback(skipped: Boolean)
+    protected abstract fun onAdEndedCallback()
 
     /**
      * on ad error callback from the player
