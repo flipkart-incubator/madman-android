@@ -35,7 +35,7 @@ class MainActivity : AppCompatActivity() {
                 Intent(this@MainActivity, IMAPlayerActivity::class.java)
             }
             intent.putExtra("url", url.text)
-            intent.putExtra("response", response.text)
+            intent.putExtra("response_option", response_group.checkedRadioButtonId)
             startActivity(intent)
         }
     }

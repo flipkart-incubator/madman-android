@@ -21,7 +21,7 @@ import android.text.TextUtils
 import com.flipkart.madman.exo.extension.MadmanAdLoader
 import com.flipkart.madman.okhttp.extension.DefaultNetworkLayer
 import com.flipkart.mediaads.demo.R
-import com.flipkart.mediaads.demo.helper.Utils.readFromAssets
+import com.flipkart.mediaads.demo.helper.Utils.readResponseFor
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.ExoPlayerFactory
 import com.google.android.exoplayer2.SimpleExoPlayer
@@ -39,7 +39,7 @@ import com.google.android.exoplayer2.util.Util
 class MadmanPlayerManager(
     context: Context,
     url: String?,
-    response: String?
+    responseId: Int
 ) : AdsMediaSource.MediaSourceFactory {
     private var adsLoader: MadmanAdLoader? = null
     private val dataSourceFactory: DataSource.Factory
@@ -124,13 +124,7 @@ class MadmanPlayerManager(
         adsLoader = if (!TextUtils.isEmpty(url)) {
             builder.buildForAdUri(Uri.parse(url))
         } else {
-            var stringResponse = response ?: ""
-            if (TextUtils.isEmpty(stringResponse)) {
-                stringResponse = readFromAssets(
-                    context,
-                    "ad_response.xml"
-                )
-            }
+            val stringResponse = readResponseFor(context, responseId)
             builder.buildForAdsResponse(stringResponse)
         }
         dataSourceFactory = DefaultDataSourceFactory(

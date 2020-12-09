@@ -48,11 +48,17 @@ limitations under the License.
             android:padding="16dp"
             android:text="or" />
 
-        <EditText
-            android:id="@+id/response"
+        <RadioGroup
+            android:id="@+id/response_group"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Enter response of vmap" />
+            android:layout_height="wrap_content">
+
+            <RadioButton
+                android:id="@+id/option_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pre + Mid + Post Roll" />
+        </RadioGroup>
     </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -61,5 +67,5 @@ limitations under the License.
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
-        app:srcCompat="@android:drawable/ic_dialog_email" />
+        app:srcCompat="@android:drawable/ic_media_play" />
 </FrameLayout>
