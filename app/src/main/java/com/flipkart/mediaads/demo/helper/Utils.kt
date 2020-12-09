@@ -36,6 +36,7 @@ object Utils {
         return buf.toString()
     }
 
+    @JvmStatic
     fun readResponseFor(context: Context, responseId: Int): String {
         return when (responseId) {
             0 -> {
