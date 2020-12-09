@@ -31,8 +31,6 @@ import com.flipkart.madman.renderer.player.AdPlayer
 import com.flipkart.madman.renderer.settings.DefaultRenderingSettings
 import com.flipkart.madman.renderer.settings.RenderingSettings
 import com.flipkart.mediaads.sdk.R
-import kotlinx.android.synthetic.main.ad_layout.view.*
-import java.util.concurrent.TimeUnit
 import kotlin.math.ceil
 
 /**
@@ -204,12 +202,18 @@ open class DefaultAdRenderer constructor(
     override fun onAdProgressUpdate(adElement: AdElement, progress: Float, duration: Float) {
         view?.let {
             val adViewHolder = viewHolders[it]
-            val seconds = TimeUnit.SECONDS.toSeconds((duration - progress).toLong())
-            adViewHolder?.adCountDownView?.text =
-                String.format(AD_STARTING_IN_PLACEHOLDER, Utils.formatSecondsToMMSS(seconds))
+
+            /** ad ending in view if present **/
+            adViewHolder?.adCountDownView?.let { textView ->
+                val seconds = ceil(duration - progress).toLong()
+                textView.text =
+                    String.format(AD_STARTING_IN_PLACEHOLDER, Utils.formatSecondsToMMSS(seconds))
+            }
 
             /** show ad skip if valid **/
-            showSkipAd(view?.skip_view, adElement, progress, duration)
+            adViewHolder?.skipView?.let { textView ->
+                showSkipAd(textView, adElement, progress, duration)
+            }
         }
     }
 
