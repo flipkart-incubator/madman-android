@@ -183,8 +183,8 @@ open class DefaultAdManager(
                 adPlaybackState.getAdGroup()?.let {
                     updateAdBreakState(AdBreak.AdBreakState.PLAYED)
                     it.onAdBreakComplete()
-                    notifyAndTrackEvent(Event.AD_STOPPED)
                     if (!wasAdSkipped) {
+                        stopAd()
                         notifyAndTrackEvent(Event.AD_COMPLETED)
                     }
                     removeAdMessageHandler()
@@ -228,7 +228,13 @@ open class DefaultAdManager(
              * if previous percentage is less than current percentage, and progress is not [Progress.UNDEFINED], fire AD_PROGRESS event
              */
             previousPercentage <= percentage && progress != Progress.UNDEFINED -> {
-                adRenderer.onAdProgressUpdate(progress.currentTime, progress.duration)
+                currentAd?.let {
+                    adRenderer.onAdProgressUpdate(
+                        it.getAdElement(),
+                        progress.currentTime,
+                        progress.duration
+                    )
+                }
                 notifyAndTrackEvent(Event.AD_PROGRESS)
             }
         }
@@ -258,10 +264,9 @@ open class DefaultAdManager(
      * Ad ended callback from the player.
      * Remove the ad message handlers and update the state
      */
-    override fun onAdEndedCallback(skipped: Boolean) {
-        if (skipped) {
-            updateAdState(AdPlaybackState.AdState.SKIPPED)
-        } else {
+    override fun onAdEndedCallback() {
+        if (!adPlaybackState.isAdSkipped()) {
+            /** if the ad is not skipped, mark it as ended **/
             updateAdState(AdPlaybackState.AdState.ENDED)
         }
         previousAdProgress = Progress.UNDEFINED
@@ -273,7 +278,7 @@ open class DefaultAdManager(
      */
     override fun onAdErrorCallback() {
         notifyAndTrackError(AdErrorType.AD_ERROR)
-        onAdEndedCallback(false)
+        onAdEndedCallback()
     }
 
     /**
@@ -294,8 +299,9 @@ open class DefaultAdManager(
      * Called when the user clicks on skip ad
      */
     override fun onSkipAdClick() {
+        updateAdState(AdPlaybackState.AdState.SKIPPED)
         notifyAndTrackEvent(Event.AD_SKIPPED)
-        onAdEndedCallback(true)
+        stopAd()
     }
 
     /**
@@ -378,6 +384,10 @@ open class DefaultAdManager(
 
     private fun playAd() {
         notifyAndTrackEvent(Event.PLAY_AD)
+    }
+
+    private fun stopAd() {
+        notifyAndTrackEvent(Event.AD_STOPPED)
     }
 
     private fun pauseContent() {

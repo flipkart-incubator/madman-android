@@ -40,7 +40,7 @@ import com.google.android.exoplayer2.util.Util
 class IMAPlayerManager(
     context: Context,
     url: String?,
-    response: String?
+    responseId: Int
 ) : AdsMediaSource.MediaSourceFactory {
     private var adsLoader: ImaAdsLoader
     private val dataSourceFactory: DataSource.Factory
@@ -122,13 +122,7 @@ class IMAPlayerManager(
         adsLoader = if (!TextUtils.isEmpty(url)) {
             builder.buildForAdTag(Uri.parse(url))
         } else {
-            var stringResponse = response ?: ""
-            if (TextUtils.isEmpty(stringResponse)) {
-                stringResponse = Utils.readFromAssets(
-                    context,
-                    "ad_response.xml"
-                )
-            }
+            val stringResponse = Utils.readResponseFor(context, responseId)
             builder.buildForAdsResponse(stringResponse)
         }
         dataSourceFactory = DefaultDataSourceFactory(
