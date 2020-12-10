@@ -33,7 +33,7 @@ class MadmanPlayerActivity : AppCompatActivity() {
         player = MadmanPlayerManager(
             this,
             intent.extras?.get("url").toString(),
-            intent.extras?.getInt("response") ?: 0
+            intent.extras?.getInt("response_option") ?: 0
         )
     }
 
