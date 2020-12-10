@@ -58,6 +58,20 @@ limitations under the License.
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Pre + Mid + Post Roll" />
+
+            <RadioButton
+                android:id="@+id/option_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Skippable Pre Roll" />
+
+            <RadioButton
+                android:id="@+id/option_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Post Roll" />
         </RadioGroup>
     </LinearLayout>
 

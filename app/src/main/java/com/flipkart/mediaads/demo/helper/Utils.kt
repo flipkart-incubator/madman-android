@@ -16,6 +16,7 @@
 package com.flipkart.mediaads.demo.helper
 
 import android.content.Context
+import com.flipkart.mediaads.demo.R
 import java.io.BufferedInputStream
 import java.io.ByteArrayOutputStream
 
@@ -39,8 +40,14 @@ object Utils {
     @JvmStatic
     fun readResponseFor(context: Context, responseId: Int): String {
         return when (responseId) {
-            0 -> {
+            R.id.option_1 -> {
                 readFromAssets(context, "ad_response.xml")
+            }
+            R.id.option_2 -> {
+                readFromAssets(context, "skippable_linear_ad_response.xml")
+            }
+            R.id.option_3 -> {
+                readFromAssets(context, "postroll_ad_response.xml")
             }
             else -> readFromAssets(context, "ad_response.xml")
         }
