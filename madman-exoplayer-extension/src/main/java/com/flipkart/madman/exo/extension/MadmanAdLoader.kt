@@ -1060,7 +1060,7 @@ class MadmanAdLoader private constructor(
      * ads in the ad group have loaded.
      */
     private fun getAdIndexInAdGroupToLoad(adGroupIndex: Int): Int {
-        @AdState val states = adPlaybackState.adGroups?.get(adGroupIndex)?.states ?: IntArray(0)
+        val states = adPlaybackState.adGroups?.get(adGroupIndex)?.states ?: IntArray(0)
         var adIndexInAdGroup = 0
         while (adIndexInAdGroup < states.size && states[adIndexInAdGroup] != AdPlaybackState.AD_STATE_UNAVAILABLE) {
             adIndexInAdGroup++
